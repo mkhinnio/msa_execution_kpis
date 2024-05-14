@@ -889,7 +889,7 @@ def import_oracle_data_from_azure_cleaned(conn):
  
 def harmonization_figures_total_waterfall(oracle_landscape_raw, harmonization_kpi, contract_type_oracle, contract_type_myac, date_filter):
     #Exemptions not_unit_level_execution
-    date_filter=date.today()
+    
     not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
     not_unit_level_executed_contract_name=["infinis"]
     not_unit_level_executed_installed_at_country=["bangladesh"]

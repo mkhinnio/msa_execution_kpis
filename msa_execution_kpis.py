@@ -29,6 +29,7 @@ from statsmodels.api import add_constant
 import statsmodels.api as sm
 import statsmodels.formula.api as smf 
 from dateutil.relativedelta import relativedelta
+from datetime import date
 
 # show all columns
 pd.set_option('display.max_columns', 999)
