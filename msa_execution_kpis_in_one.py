@@ -12,7 +12,6 @@ import datetime as dt
 # Import Packages
 import pandas as pd
 import numpy as np
-from datetime import date
 import shutil
 import xlsxwriter
 
@@ -44,12 +43,31 @@ pd.set_option('display.max_columns', 999)
 ##########################################################################################
 # IMPORT
 ##########################################################################################
+
 conn = activate_database_driver(driver_version="18", credentials_file="credentials.yml")
 
-oracle_landscape_raw = import_oracle_data_from_azure(conn)
 
+#######################
+##1st: MSA fleet status / and also 2nd MSA Data Quality status
+#######################
+
+####
+#Criteria: 
+#Active MSAs: Contract Numbers with contract status active 
+#Active Units: Oracle contract unit status active unit oks status ??? 
+#Unit level execution: Manual list 
+#Unit commissioned: Oracle unit IB status is "active" or "active-docu inoplete" or "temporarily inactive"
+####
+
+oracle_landscape_raw = import_oracle_data_from_azure(conn)
 oracle_landscape_select = oracle_landscape_raw.rename(columns={"unit serial - number only":"usn","contract number":"contract_number"})
-#Load key reports 
+
+
+
+########################
+#2nd: Data quality status
+######################## 
+
 #IB report 
 ib_extended_report=import_ib_extended_from_azure(conn)
 #myPlant - USN mapping 
@@ -69,18 +87,8 @@ msa_data_quality_backbone=gen_input_df_msa_data_quality(oracle_landscape_select,
 active_unit_unit_level_usns_total,active_outdated_oph_counter,active_beyond_contract_end, active_outside_counter_range, active_missing_partscope, active_missing_partscope_or_event, df_steerco_overview_updated = msa_data_quality(msa_data_quality_backbone, "usn", ["MSA BILLABLE SHIPPING"],[], date.today(), ib_status_selected)
 
 msa_types_to_structure=["MSA BILLABLE SHIPPING","MSA USAGE BILLED","MSA PREVENTIVE AND CORRECTIVE"]
+ib_status_selected=["Active","Standby","Active Docu incomplete", "Temporarily Inactive"]
 
-#######################
-##1st: MSA fleet status
-#######################
-
-####
-#Criteria: 
-#Active MSAs: Contract Numbers with contract status active 
-#Active Units: Oracle contract unit status active unit oks status ??? 
-#Unit level execution: Manual list 
-#Unit commissioned: Oracle unit IB status is "active" or "active-docu inoplete" or "temporarily inactive"
-####
 
 #######################
 ##EVALUATE TABLES
@@ -90,13 +98,16 @@ date_filter=date.today()
 
 
 print(f"Date evaluated on: {date_filter}")   
-msa_types_to_structure=["MSA BILLABLE SHIPPING","MSA USAGE BILLED","MSA PREVENTIVE AND CORRECTIVE"]
-ib_status_selected=["Active","Standby","Active Docu incomplete", "Temporarily Inactive"]
 
 main_path="overall_msa_execution_stats"
 
 df_export_fleet_status=pd.DataFrame()
 df_export_data_quality=pd.DataFrame()
+##Add here: export for other topics
+
+#######################
+##GENERATE CURRENT STATUS SUMMARY
+#######################
 
 for combination in itertools.product(msa_types_to_structure, ["usn","contract_number"]):
     df_0, df_1, df_2, df_3, df_4,overview = msa_fleet_status(oracle_landscape_select, combination[1], [combination[0]],[], date_filter, ib_status_selected)
@@ -135,11 +146,13 @@ create_excel_table_for_data_table(writer=writer, df=df_data_quality_appended, sh
 writer.close()
 
 
+#######################
+##EXAMPLE TEST
+#######################
 
-
-
-df_1,df_2,df_3, df_4, df_5, df_6, df_steerco_overview_updated = msa_data_quality(msa_data_quality_backbone, "usn", ["MSA BILLABLE SHIPPING"],[], date.today(), ib_status_selected)
-df_steerco_overview_updated
+######
+# df_1,df_2,df_3, df_4, df_5, df_6, df_steerco_overview_updated = msa_data_quality(msa_data_quality_backbone, "usn", ["MSA BILLABLE SHIPPING"],[], date.today(), ib_status_selected)
+# df_steerco_overview_updated
 
 
 

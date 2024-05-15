@@ -48,24 +48,26 @@ conn = activate_database_driver(driver_version="18", credentials_file="credentia
 ib_status_selected=["Active","Standby","Active Docu incomplete", "Temporarily Inactive"]
 
 oracle_landscape_raw = import_oracle_data_from_azure(conn)
+oracle_landscape_select = oracle_landscape_raw.rename(columns={"unit serial - number only":"usn","contract number":"contract_number"})
 
 geo_loc_ib_metabase = import_geo_loc(conn)
 
-
 df_corner_point = import_corner_point(conn)
+ib_extended_report=import_ib_extended_from_azure(conn)
 
 df_aggregated_oph_year, df_corner_point = aggregated_oph_year(df_corner_point)
 
 df_aggregated_oph_year=df_aggregated_oph_year.merge(geo_loc_ib_metabase[["asset_id","unit_serial_number"]], how="left",on="asset_id")
-###
-#Total number of hours by fleet type
-###
 
-msa_df_1,msa_df_2,msa_df_3, msa_df_4, msa_df_5, df_steerco_overview_updated_msa = msa_fleet_status(oracle_landscape_raw, "unit serial - number only", ["PREVENTIVE AND CORRECTIVE","MSA USAGE BILLED", "MSA BILLABLE SHIPPING"],[
+##########################################################################################
+#Total number of hours by fleet type
+##########################################################################################
+
+msa_df_1,msa_df_2,msa_df_3, msa_df_4, msa_df_5, df_steerco_overview_updated_msa = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","MSA USAGE BILLED", "MSA BILLABLE SHIPPING"],[
     "MSA_PREVENTIVE_AND_CORRECTIVE","MSA_PREVENTIVE"], date.today(), ib_status_selected)
 df_steerco_overview_updated_msa
 
-csa_df_1,csa_df_2,csa_df_3, csa_df_4, csa_df_5, df_steerco_overview_updated_csa = msa_fleet_status(oracle_landscape_raw, "unit serial - number only", ["PREVENTIVE AND CORRECTIVE","PREVENTIVE MAINTENANCE"],[
+csa_df_1,csa_df_2,csa_df_3, csa_df_4, csa_df_5, df_steerco_overview_updated_csa = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","PREVENTIVE MAINTENANCE"],[
     "CSA_PREVENTIVE_AND_CORRECTIVE","CSA_PREVENTIVE"], date.today(), ib_status_selected)
 df_steerco_overview_updated_csa
 
