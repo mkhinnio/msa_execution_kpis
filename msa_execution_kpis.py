@@ -92,7 +92,7 @@ for combination in itertools.product(msa_types_to_structure, ["unit serial - num
 ##LOAD HISTORIC VALUES
 #######################
 
-historic_df_export=get_historic_values("msa_fleet_status/stacked","appended_values")
+historic_df_export=get_historic_values("overall_msa_execution_stats/stacked","appended_values")
 
 #######################
 ##GENERATE OUTPUTS

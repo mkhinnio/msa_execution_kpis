@@ -1017,7 +1017,7 @@ def msa_fleet_status(input_df, harmonization_kpi, contract_type_oracle, contract
     not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
     not_unit_level_executed_contract_name=["infinis"]
     not_unit_level_executed_installed_at_country=["bangladesh"]
-    not_unit_level_usns=input_df.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"unit serial - number only"].unique()
+    not_unit_level_usns=input_df.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"usn"].unique()
 
 
     #Oracle filtering 
@@ -1031,11 +1031,11 @@ def msa_fleet_status(input_df, harmonization_kpi, contract_type_oracle, contract
     active_contract_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE"),harmonization_kpi].unique()
     active_unit_oks_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE"),harmonization_kpi].unique()
     active_unit_ib_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_not_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==True)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_unit_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_unit_not_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==True)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
     
     active_unit_ib_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_ib_total_unit_level=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
+    active_unit_ib_total_unit_level=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True)&(x["usn"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
 
     not_unit_operationalization="|".join(["customer:"]+not_unit_level_executed_customers+["contract:"]+not_unit_level_executed_contract_name+["country:"]+not_unit_level_executed_installed_at_country)
 
@@ -1314,7 +1314,7 @@ def events_partscope_qty_myp(input_events, input_partscope): # active_assets = d
     dmp_events_select_relevant_harmonized_grouped = (dmp_events_select_relevant_harmonized
                                                      .dropna(subset = "interval")[lambda x: x["interval"] != ""]
                                                     .assign(interval = lambda x: x["interval"].astype(int))
-                                                    .groupby(["asset_id", "package_name_harmonized"])
+                                                    .groupby(["asset_id"])
                                                     .agg(number_events_dmp = ("interval", "nunique"),
                                                         maturityintervals_myplant_dmp = ("interval", lambda x: sorted(list(set(x))))
                                                         )
@@ -1328,21 +1328,20 @@ def events_partscope_qty_myp(input_events, input_partscope): # active_assets = d
     # group data
     sbom_nonsuperseded_relevant_grouped = (sbom_nonsuperseded_relevant
                                             .assign(oph = lambda x: x["oph"].astype(int))
-                                            .groupby(["asset_id", "comment"])
+                                            .groupby(["asset_id"])
                                             .agg(number_events_sbom = ("oph", "nunique"),
                                             maturityintervals_myplant_sbom = ("oph", lambda x: sorted(list(set(x))))
                                             )
                                             .reset_index()
-                                            .rename(columns = {"comment": "package_name_harmonized"})
                                             )
 
     ## compare both data sources
     df_packages_events_sbom = (pd.merge(
         dmp_events_select_relevant_harmonized_grouped.drop(columns = "maturityintervals_myplant_dmp"),
         sbom_nonsuperseded_relevant_grouped.drop(columns = "maturityintervals_myplant_sbom"),
-        on = ["asset_id", "package_name_harmonized"],
+        on = ["asset_id"],
         how = "outer")
-        .sort_values(by = ["asset_id", "package_name_harmonized"])
+        .sort_values(by = ["asset_id"])
         .fillna({"number_events_dmp": 0, "number_events_sbom": 0})
         .assign(sum_zero_at_least_once = lambda x: np.where((x["number_events_dmp"] == 0) | (x["number_events_sbom"]==0), True, False),
                 sum_zero_at_partscope = lambda x: np.where((x["number_events_sbom"]==0), True, False))
@@ -1353,9 +1352,9 @@ def events_partscope_qty_myp(input_events, input_partscope): # active_assets = d
 
 
 
-def gen_input_df_msa_data_quality(oracle_landscape_raw, ib_extended_report, geo_loc_ib_metabase, df_packages_events_sbom_myp, opportunity_report_myac):
-    ls_select=oracle_landscape_raw[["unit serial - number only","engine serial - number only","installed at country","contract name","contract status","customer name","unit commissioning date",
-            "engine commissioning date","contract number", "contract type myac","contract type oracle", "unit oks status","unit status ib"]]
+def gen_input_df_msa_data_quality(ls_input, ib_extended_report, geo_loc_ib_metabase, df_packages_events_sbom_myp, opportunity_report_myac):
+    ls_select=ls_input[["usn","engine serial - number only","installed at country","contract name","contract status","customer name","unit commissioning date",
+            "engine commissioning date","contract_number", "contract type myac","contract type oracle", "unit oks status","unit status ib"]]
     ls_select=ls_select.rename(columns={"unit serial - number only":"usn",
     "engine serial - number only":"esn", "contract number":"contract_number"})
     
