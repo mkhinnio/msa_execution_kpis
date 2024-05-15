@@ -536,6 +536,7 @@ def import_costs(conn):
     return engine_forecast_engine_counter_corner_point
 
 
+
 def import_corner_point(conn):
     '''
     highlevel data
@@ -886,32 +887,155 @@ def import_oracle_data_from_azure_cleaned(conn):
  
 
 
- 
-def harmonization_figures_total_waterfall(oracle_landscape_raw, harmonization_kpi, contract_type_oracle, contract_type_myac, date_filter):
+def import_ib_extended_from_azure(conn):
+    '''
+    Extended report for engine OPH counter
+    '''
+    query = """
+            SELECT * 
+            FROM sot_gps_dp.dwh_dm_ibdwh_ib_extended_report
+            """
+    ib_raw_report = pd.read_sql(query, conn) 
+    return ib_raw_report
+
+
+
+def import_dmp_events(conn):
+    '''
+    event data
+    '''
+    query = """
+            SELECT * 
+            FROM myplant.maintenance_events_dmp_events
+            """
+    dmp_events = pd.read_sql(query, conn) 
+    return dmp_events
+
+
+def import_geo_loc(conn):
+    '''
+    highlevel data
+    '''
+    query = """
+            SELECT * 
+            FROM myplant.geo_loc_ib_metadata
+            """
+    geo_loc_ib_metabase = pd.read_sql(query, conn) 
+    return geo_loc_ib_metabase
+
+
+def import_sbom_nonsuperseded(conn):
+    '''
+    event data
+    '''
+    query = """
+            SELECT * FROM pgsdwh.myplant.sbom_sync_msa_parts_scope AS sbom_raw
+            LEFT JOIN 
+                (SELECT id AS comment_id, comment AS comment_translated
+                FROM pgsdwh.myplant.part_scope_service_allowed_msa_comments) 
+                AS translation_table
+            ON sbom_raw.comment = translation_table.comment_id
+            """
+    sbom_nonsuperseded = pd.read_sql(query, conn).drop(columns = ["comment"]).rename(columns = {"comment_translated": "comment"})
+    return sbom_nonsuperseded
+
+
+
+def get_unit_definition_h(conn):
+    '''
+    Unit - Definition
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_dm_myac_unit_definition_h
+            """
+    unit_definition_h = pd.read_sql(query, conn) 
+    return unit_definition_h
+
+def get_unit_definition_billings_h(conn):
+    '''
+    MYAC Data source	Unit - Definition - Billings
+    Description	Array of billings defined for the unit
+    Azure DWH table	dwh_dm_myac_unit_definition_billings_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_dm_myac_unit_definition_billings_h
+            """
+    unit_definition_billings_h = pd.read_sql(query, conn) 
+    return unit_definition_billings_h
+
+def get_opportunity_definition_h(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_dm_myac_opportunity_definition_h
+            """
+    opportunity_definition_h = pd.read_sql(query, conn) 
+    return opportunity_definition_h
+
+def get_opportunity_config(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_vw_myac_opportunity_configuration_report
+            """
+    opportunity_config_h = pd.read_sql(query, conn) 
+    return opportunity_config_h
+
+def get_contract_definition_h(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_dm_myac_contract_definition_h
+            """
+    contract_definition_h = pd.read_sql(query, conn) 
+    return contract_definition_h
+
+def get_unit_definition_h(conn):
+    '''
+    Unit - Definition
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT * 
+            FROM pgsdwh.sot_gps_dp.dwh_dm_myac_unit_definition_h
+            """
+    unit_definition_h = pd.read_sql(query, conn) 
+    return unit_definition_h
+
+def msa_fleet_status(input_df, harmonization_kpi, contract_type_oracle, contract_type_myac, date_filter, ib_status_selected):
     #Exemptions not_unit_level_execution
     
     not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
     not_unit_level_executed_contract_name=["infinis"]
     not_unit_level_executed_installed_at_country=["bangladesh"]
-    not_unit_level_usns=oracle_landscape_raw.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"unit serial - number only"].unique()
+    not_unit_level_usns=input_df.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"unit serial - number only"].unique()
 
 
     #Oracle filtering 
     # 
     if contract_type_myac!=[]:
 
-        oracle_landscape_raw=oracle_landscape_raw.loc[lambda x: (x["contract type myac"].isin(contract_type_myac)==True)&(x["contract type oracle"].isin(contract_type_oracle)==True),:]
+        input_df=input_df.loc[lambda x: (x["contract type myac"].isin(contract_type_myac)==True)&(x["contract type oracle"].isin(contract_type_oracle)==True),:]
     else:
-        oracle_landscape_raw=oracle_landscape_raw.loc[lambda x: (x["contract type oracle"].isin(contract_type_oracle)==True),:]
-    ib_types=["Active","Standby","Active Docu incomplete"]
-    active_contract_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE"),harmonization_kpi].unique()
-    active_unit_oks_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE"),harmonization_kpi].unique()
-    active_unit_ib_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_unit_level_usns_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_not_unit_level_usns_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==True)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+        input_df=input_df.loc[lambda x: (x["contract type oracle"].isin(contract_type_oracle)==True),:]
+    ib_types=ib_status_selected
+    active_contract_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE"),harmonization_kpi].unique()
+    active_unit_oks_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE"),harmonization_kpi].unique()
+    active_unit_ib_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_unit_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_unit_not_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==True)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
     
-    active_unit_ib_total=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
-    active_unit_ib_total_unit_level=oracle_landscape_raw.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
+    active_unit_ib_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_unit_ib_total_unit_level=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit status ib"].isin(ib_types)==True)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
 
     not_unit_operationalization="|".join(["customer:"]+not_unit_level_executed_customers+["contract:"]+not_unit_level_executed_contract_name+["country:"]+not_unit_level_executed_installed_at_country)
 
@@ -922,15 +1046,15 @@ def harmonization_figures_total_waterfall(oracle_landscape_raw, harmonization_kp
     dict_steerco_today["Entries Total, Oracle contract Active"] = len(active_contract_total)
     dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active"] = len(active_unit_oks_total)
     dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active"] = len(active_unit_ib_total)
-    dict_steerco_today["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution"] = len(active_unit_unit_level_usns_total)
-    dict_steerco_today["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & not-unit-level-execution"] = len(active_unit_not_unit_level_usns_total)
+    dict_steerco_today["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & unit-level-execution"] = len(active_unit_unit_level_usns_total)
+    dict_steerco_today["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & not-unit-level-execution"] = len(active_unit_not_unit_level_usns_total)
 
     dict_operationalization={}
     dict_operationalization["Entries Total, Oracle contract Active"] = "contract status & unit oks status"
     dict_operationalization["Entries Total, Oracle contract Active & Unit OKS Active"] = "contract status & unit oks status"
     dict_operationalization["Entries Total, Oracle contract Active & Unit OKS Active & IB Active"] = "contract status & unit oks status & unit ib status"
-    dict_operationalization["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution"] = f"contract status & unit oks status & unit ib status & not {not_unit_operationalization}"
-    dict_operationalization["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & not-unit-level-execution"] = f"contract status & unit oks status & unit ib status & {not_unit_operationalization}"
+    dict_operationalization["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & unit-level-execution"] = f"contract status & unit oks status & unit ib status & not {not_unit_operationalization}"
+    dict_operationalization["thereof: Entries Total, Oracle contract Active & Unit OKS Active & IB Active & not-unit-level-execution"] = f"contract status & unit oks status & unit ib status & {not_unit_operationalization}"
     
     
     # create todays table and transform
@@ -949,6 +1073,68 @@ def harmonization_figures_total_waterfall(oracle_landscape_raw, harmonization_kp
     return active_contract_total, active_unit_oks_total, active_unit_ib_total, active_unit_unit_level_usns_total, active_unit_not_unit_level_usns_total, df_steerco_overview_updated
 
 
+def msa_data_quality(input_df, harmonization_kpi, contract_type_oracle, contract_type_myac, date_filter, ib_status_selected):
+    #Exemptions not_unit_level_execution
+    
+    not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
+    not_unit_level_executed_contract_name=["infinis"]
+    not_unit_level_executed_installed_at_country=["bangladesh"]
+    not_unit_level_usns=input_df.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"usn"].unique()
+
+
+    #Oracle filtering 
+    # 
+    if contract_type_myac!=[]:
+
+        input_df=input_df.loc[lambda x: (x["contract type myac"].isin(contract_type_myac)==True)&(x["contract type oracle"].isin(contract_type_oracle)==True),:]
+    else:
+        input_df=input_df.loc[lambda x: (x["contract type oracle"].isin(contract_type_oracle)==True),:]
+    ib_types=ib_status_selected
+    active_unit_unit_level_usns_total=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True),harmonization_kpi].unique()
+    active_outdated_oph_counter=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True)&(x["outdated_oph_counter"]==True),harmonization_kpi].unique()
+    active_beyond_contract_end=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True)&(x["beyond_unit_end_date"]==True),harmonization_kpi].unique()
+    active_outside_counter_range=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True)&(x["unit_outside_counter_range"]==True),harmonization_kpi].unique()
+    active_missing_partscope=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True)&(x["zero_partscope"]==True),harmonization_kpi].unique()
+    active_missing_partscope_or_event=input_df.loc[lambda x: (x["engine commissioning date"]<=date_filter)&(x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["usn"].isin(not_unit_level_usns)==False)&(x["unit status ib"].isin(ib_types)==True)&(x["zero_partscope_or_events"]==True),harmonization_kpi].unique()
+    
+    
+    not_unit_operationalization="|".join(["customer:"]+not_unit_level_executed_customers+["contract:"]+not_unit_level_executed_contract_name+["country:"]+not_unit_level_executed_installed_at_country)
+
+    
+
+    dict_steerco_today = {}
+    dict_steerco_today["KPI"] = contract_type_oracle[0]
+    dict_steerco_today["1) Entries Total, Oracle contract Active & Unit OKS Active & IB Active & unit-level-execution"] = len(active_unit_unit_level_usns_total)
+    dict_steerco_today["Entries Total, out of 1) with outdated oph counter"] = len(active_outdated_oph_counter)
+    dict_steerco_today["Entries Total, out of 1) with unit end date passed"] = len(active_beyond_contract_end)
+    dict_steerco_today["Entries Total, out of 1) with counter outside range"] = len(active_outside_counter_range)
+    dict_steerco_today["Entries Total, out of 1) with partscope zero"] = len(active_missing_partscope)
+    dict_steerco_today["Entries Total, out of 1) with partscope or events zero"] = len(active_missing_partscope_or_event)
+
+    dict_operationalization={}
+    dict_operationalization["1) Entries Total, Oracle contract Active & Unit OKS Active & IB Active & unit-level-execution"] = f"contract status & unit oks status & unit ib status & not {not_unit_operationalization}"
+    dict_operationalization["Entries Total, out of 1) with outdated oph counter"] = "Today - Last Counter Reading > 6 months"
+    dict_operationalization["Entries Total, out of 1) with unit end date passed"] = "Today > Unit end date"
+    dict_operationalization["Entries Total, out of 1) with counter outside range"] = "OPH counter <startcounter | >endcounter"
+    dict_operationalization["Entries Total, out of 1) with partscope zero"] = "MYP partscope empty"
+    dict_operationalization["Entries Total, out of 1) with partscope or events zero"] = "MYP partscope or events table empty"
+    
+
+    
+    # create todays table and transform
+    df_steerco_today = pd.DataFrame.from_dict(dict_steerco_today, orient='index').T.set_index("KPI")
+    df_steerco_overview_updated = pd.concat([df_steerco_today])[lambda x: ~x.index.duplicated(keep='last')].T
+
+    df_operationalization = pd.DataFrame.from_dict(dict_operationalization, orient='index')
+    df_operationalization = df_operationalization.rename(columns={0:"OPERATIONALIZATION"})
+
+    df_steerco_overview_updated["TIMESTAMP"]=date_filter
+    df_steerco_overview_updated=pd.concat([df_steerco_overview_updated,df_operationalization], axis=1)
+    df_steerco_overview_updated["CATEGORY"]=contract_type_oracle[0]
+    df_steerco_overview_updated=df_steerco_overview_updated.rename(columns={contract_type_oracle[0]:"VALUE"})
+    df_steerco_overview_updated=df_steerco_overview_updated.reset_index().rename(columns={"index":"FILTER"})
+    df_steerco_overview_updated["KPI"]=harmonization_kpi
+    return active_unit_unit_level_usns_total,active_outdated_oph_counter,active_beyond_contract_end, active_outside_counter_range, active_missing_partscope, active_missing_partscope_or_event, df_steerco_overview_updated
 
 # ###Numbers ALEX
 
@@ -991,3 +1177,313 @@ def harmonization_figures_total_waterfall(oracle_landscape_raw, harmonization_kp
     
 # print(oracle_landscape_active.groupby(['contract type oracle'])['oracle_contract_number'].count())
 # print(len(oracle_landscape_active.groupby(['oracle_contract_number'])['oracle_contract_number'].count()))
+
+
+
+
+
+####Simulating historical time series 
+
+# today=date.today()
+# today=str(today)
+# iterations_months=[el for el in range(0,25)]
+
+# for it in iterations_months:
+#     df_export=pd.DataFrame()
+#     date_filter=date.today()- relativedelta(months=(24-it))
+#     print(f"Date evaluated on: {date_filter}")   
+#     msa_types_to_structure=["MSA BILLABLE SHIPPING","MSA USAGE BILLED","MSA PREVENTIVE AND CORRECTIVE"]
+    
+
+#     for combination in itertools.product(msa_types_to_structure, ["unit serial - number only","contract number"]):
+#         df_0, df_1, df_2, df_3, df_4,overview = harmonization_figures_total_waterfall(oracle_landscape_raw, combination[1], [combination[0]],[], date_filter)
+#         overview
+#         df_export=pd.concat([df_export,overview], axis=0)     
+        
+        
+#     #######################
+#     ##LOAD HISTORIC VALUES
+#     #######################
+
+#     historic_df_export=get_historic_values("msa_fleet_status/stacked","appended_values")
+#     print(len(historic_df_export))
+#     #######################
+#     ##APPEND HISTORIC VALUES
+#     #######################
+
+#     df_export_appended=pd.concat([df_export,historic_df_export], axis=0)
+   
+
+#     writer = pd.ExcelWriter("msa_fleet_status/stacked/msa_execution_kpis_" + str(date_filter) + ".xlsx", engine='xlsxwriter')
+#     create_excel_table_for_data_table(writer=writer, df=df_export_appended, sheet_name="appended_values")
+    
+#     writer.close()
+    
+#     writer = pd.ExcelWriter("msa_fleet_status/unstacked/msa_execution_kpis_" + str(date_filter) + ".xlsx", engine='xlsxwriter')
+#     create_excel_table_for_data_table(writer=writer, df=df_export, sheet_name="appended_values")
+    
+#     writer.close()
+
+#     writer = pd.ExcelWriter("msa_fleet_status/msa_execution_kpis_" + str(date_filter) + ".xlsx", engine='xlsxwriter')
+#     create_excel_table_for_data_table(writer=writer, df=df_export_appended, sheet_name="appended_values")
+    
+#     writer.close()
+
+
+
+
+# create function for harmonizing myplant package names
+def create_harmonization_table_for_myplant_events(df, unharmonized_name_column):
+    # count number of occurences
+    tmp_df_occurence_count = df.assign(number_of_occurences = 1).groupby(unharmonized_name_column)["number_of_occurences"].count().reset_index()
+    # harmonize names
+    df = (df[[unharmonized_name_column]].drop_duplicates()
+            .assign(package_name_harmonized = lambda x: 
+                    np.select(
+                        [(x[unharmonized_name_column].str.lower().str.contains("spark")) | (x[unharmonized_name_column].str.lower() == "sp"), 
+                        x[unharmonized_name_column].str.lower().str.contains("cylinder"), 
+                        x[unharmonized_name_column].str.lower().str.contains("oil"), 
+                        x[unharmonized_name_column].str.lower().str.contains("gas"),
+                        x[unharmonized_name_column].str.lower().str.contains("air"),
+                        x[unharmonized_name_column].str.lower().str.contains("cranck"),
+                        x[unharmonized_name_column].str.count("3") >= 2,
+                        x[unharmonized_name_column].str.count("6") >= 2,
+                        (x[unharmonized_name_column].str.lower().str.contains("2k")) | (x[unharmonized_name_column].str.lower().str.contains("4k")) | (x[unharmonized_name_column].str.lower().str.contains("10k")) | (x[unharmonized_name_column].str.lower().str.contains("20k")) | (x[unharmonized_name_column].str.lower().str.contains("30k")) | (x[unharmonized_name_column].str.lower().str.contains("40k")) | (x[unharmonized_name_column].str.lower().str.contains("60k")),
+                        x[unharmonized_name_column] == "Annual",
+                        x[unharmonized_name_column] == "OC",
+                        x[unharmonized_name_column] == ""
+                        ], 
+                        ["Set of Spark Plugs", 
+                        "Cylinder Heads", 
+                        "Set of Oil Filters", 
+                        "Set of Gas Filters",
+                        "Set of Air Filters",
+                        "Set of Crankcase Ventilation Filters",
+                        "3.3K",
+                        "6.6K", 
+                        x[unharmonized_name_column].str.lower().str.split("k").str[0] + "K",
+                        "Other - Annual",
+                        "Other - OC",
+                        "not defined"
+                        ])
+                    )
+            .assign(package_name_harmonized = lambda x: np.where(x["package_name_harmonized"]==0, "not checked", x["package_name_harmonized"]))
+            .sort_values(by = "package_name_harmonized")
+            .reset_index(drop=True))
+    # add number of occurences
+    df = pd.merge(
+        df,
+        tmp_df_occurence_count,
+        on = unharmonized_name_column,
+        how = "left")
+    return df
+
+# create table to find mismatches
+def events_partscope_qty_myp(input_events, input_partscope): # active_assets = dm_packages_cpq_myplant_overview[lambda x: x["oracle_unit_status"] == "ACTIVE"]["asset_id"].dropna().astype(int).unique()
+    '''
+    why necessary? For the validation, dmp_events have been used for counting number of packages
+    if dmp_events (scheduled events) and sbom (partscope) are mismatching it could lead to problems
+    contact Robert for Cleanup
+    May need to re-upload scopes
+    The list of assets coming out in the end also contains assets that are inactive! Only the active ones need to be cleaned up.
+    '''
+    ## dmp_events
+    # exclude "cancelled" events 
+    dmp_events_select = input_events[lambda x: ~(x["status"].isin(["CANCELLED"]))].dropna(subset = "asset_id") #  & (x["asset_id"].isin(active_assets))
+    # select only entries with specific format (very few outliers)
+    dmp_events_select = dmp_events_select.dropna(subset = "name")[lambda x: (x["name"].str.contains("@"))]
+    # split event into package name and interval after re-aligning some 10 entries with double @
+    dmp_events_select[['package_name_myplant', 'interval']] = (dmp_events_select['name']
+                                                                    .str.replace("@ @", "@")
+                                                                    .str.split(' @ ', n=1, expand=True))
+    # clean up interval column (only 2 outliers)
+    dmp_events_select = dmp_events_select.assign(interval = lambda x: x["interval"].astype(str)
+                                            .apply(lambda y: ''.join(c for c in y if c.isdigit())))
+    # may have to harmonize those, but for now: exclude
+    dmp_events_select_relevant = dmp_events_select[["asset_id", "package_name_myplant", "interval"]].drop_duplicates()
+
+
+    # create harmonization table
+    myplant_events_translation = create_harmonization_table_for_myplant_events(df=dmp_events_select_relevant, unharmonized_name_column="package_name_myplant")
+    # harmonize harmonized column (! manual check !)
+    myplant_events_translation = myplant_events_translation.assign(package_name_harmonized = lambda x: np.where(x["package_name_harmonized"] == "not checked", x["package_name_myplant"], x["package_name_harmonized"]))
+    # add to events-table
+    dmp_events_select_relevant_harmonized = dmp_events_select_relevant.merge(myplant_events_translation.drop(columns = "number_of_occurences"), on = "package_name_myplant", how = "left")
+    
+    # group data
+    dmp_events_select_relevant_harmonized_grouped = (dmp_events_select_relevant_harmonized
+                                                     .dropna(subset = "interval")[lambda x: x["interval"] != ""]
+                                                    .assign(interval = lambda x: x["interval"].astype(int))
+                                                    .groupby(["asset_id", "package_name_harmonized"])
+                                                    .agg(number_events_dmp = ("interval", "nunique"),
+                                                        maturityintervals_myplant_dmp = ("interval", lambda x: sorted(list(set(x))))
+                                                        )
+                                                    .reset_index()
+                                                    )
+    ## sbom_nonsuperseded
+    # select relevant asset-ids
+    # sbom_nonsuperseded_relevant = sbom_nonsuperseded[lambda x: x["asset_id"].astype(int).isin(active_assets)]
+    sbom_nonsuperseded_relevant = input_partscope[["asset_id", "comment", "oph"]].dropna(subset = "asset_id").drop_duplicates()
+
+    # group data
+    sbom_nonsuperseded_relevant_grouped = (sbom_nonsuperseded_relevant
+                                            .assign(oph = lambda x: x["oph"].astype(int))
+                                            .groupby(["asset_id", "comment"])
+                                            .agg(number_events_sbom = ("oph", "nunique"),
+                                            maturityintervals_myplant_sbom = ("oph", lambda x: sorted(list(set(x))))
+                                            )
+                                            .reset_index()
+                                            .rename(columns = {"comment": "package_name_harmonized"})
+                                            )
+
+    ## compare both data sources
+    df_packages_events_sbom = (pd.merge(
+        dmp_events_select_relevant_harmonized_grouped.drop(columns = "maturityintervals_myplant_dmp"),
+        sbom_nonsuperseded_relevant_grouped.drop(columns = "maturityintervals_myplant_sbom"),
+        on = ["asset_id", "package_name_harmonized"],
+        how = "outer")
+        .sort_values(by = ["asset_id", "package_name_harmonized"])
+        .fillna({"number_events_dmp": 0, "number_events_sbom": 0})
+        .assign(sum_zero_at_least_once = lambda x: np.where((x["number_events_dmp"] == 0) | (x["number_events_sbom"]==0), True, False),
+                sum_zero_at_partscope = lambda x: np.where((x["number_events_sbom"]==0), True, False))
+        )
+    return df_packages_events_sbom
+
+
+
+
+
+def gen_input_df_msa_data_quality(oracle_landscape_raw, ib_extended_report, geo_loc_ib_metabase, df_packages_events_sbom_myp, opportunity_report_myac):
+    ls_select=oracle_landscape_raw[["unit serial - number only","engine serial - number only","installed at country","contract name","contract status","customer name","unit commissioning date",
+            "engine commissioning date","contract number", "contract type myac","contract type oracle", "unit oks status","unit status ib"]]
+    ls_select=ls_select.rename(columns={"unit serial - number only":"usn",
+    "engine serial - number only":"esn", "contract number":"contract_number"})
+    
+    ib_select=ib_extended_report[["unit_item","item_number_engine", "unit_contract_end_date","most_updated_unit_oph_counter_reading","most_updated_unit_oph_counter_reading_date"]]
+    ib_select=ib_select.rename(columns={"unit_item":"usn","item_number_engine":"esn"})
+    #myac_select=dm_myac_overview[["contract_number","usn","unitstartcounter","unitendcounter"]].drop_duplicates()
+    myac_select=opportunity_report_myac[["Unit Serial Number","Oracle Contract Number","Unit Start Counter","Unit End Counter","Unit End Date"]].drop_duplicates()
+    myac_select=myac_select.rename(columns={"Unit Serial Number":"usn","Unit Start Counter":"unitstartcounter",
+                                            "Unit End Counter":"unitendcounter","Unit End Date":"unit_end_date", 
+                                            "Oracle Contract Number":"contract_number"})
+    geo_select=geo_loc_ib_metabase[["unit_serial_number","asset_id"]].rename(columns={"unit_serial_number":"usn"})
+    #df_packages_events_sbom_myp
+    #Combine
+    output_df=ls_select.merge(ib_select, how="left", on=["usn","esn"])
+    output_df=output_df.merge(myac_select, how="left", on=["usn","contract_number"])
+    output_df=output_df.merge(geo_select, how="left", on=["usn"])
+    output_df=output_df.merge(df_packages_events_sbom_myp, how="left", on=["asset_id"])
+
+    output_df["days_beyond_unit_end_date"]=output_df["unit_end_date"]-date.today()
+    output_df["days_beyond_unit_end_date"]=output_df["days_beyond_unit_end_date"].apply(lambda x: x.days if isinstance(x, dt.timedelta) else None)
+    #Generate flags 
+    #1st: Units with outdated OPH counters
+    output_df=output_df.assign(outdated_oph_counter=lambda x: np.where(x["most_updated_unit_oph_counter_reading_date"].dt.month-date.today().month<(-6),True,False))
+    output_df=output_df.assign(outdated_oph_counter=lambda x: np.where(x["most_updated_unit_oph_counter_reading_date"].isna()==True,True,x["outdated_oph_counter"]))
+    #2nd: Units beyond unit end date
+    output_df=output_df.assign(beyond_unit_end_date=lambda x: np.where(x["days_beyond_unit_end_date"]<0,True,False))
+    output_df=output_df.assign(beyond_unit_end_date=lambda x: np.where(x["days_beyond_unit_end_date"].isna()==True,True,x["beyond_unit_end_date"]))
+
+    #3rd: Units outside contractual counter ranges (#)
+
+    output_df=output_df.assign(unit_outside_counter_range=lambda x: np.where((x["most_updated_unit_oph_counter_reading"]>x["unitendcounter"])|(x["most_updated_unit_oph_counter_reading"]<x["unitstartcounter"]),True,False))
+    output_df=output_df.assign(unit_outside_counter_range=lambda x: np.where(x["most_updated_unit_oph_counter_reading"].isna()==True,True,x["unit_outside_counter_range"]))
+
+    #4th: Units with missing myPlant scopes
+    output_df=output_df.assign(zero_partscope=lambda x: np.where((x["sum_zero_at_partscope"]==True),True,False))
+    output_df=output_df.assign(zero_partscope=lambda x: np.where(x["sum_zero_at_partscope"].isna()==True,True,x["zero_partscope"]))
+
+    #5th: Units with either missing partscope in myPlant or events
+    output_df=output_df.assign(zero_partscope_or_events=lambda x: np.where((x["sum_zero_at_least_once"]==True),True,False))
+    output_df=output_df.assign(zero_partscope_or_events=lambda x: np.where(x["sum_zero_at_least_once"].isna()==True,True,x["zero_partscope_or_events"]))
+    return output_df
+
+
+
+
+def aggregated_oph_year(df_corner_point):
+
+    for i in range(0,len(df_corner_point)):
+        df_corner_point["timestamp"][i]=dt.datetime.fromtimestamp((df_corner_point["timestamp"][i]/1000))
+
+    df_corner_point["year"]=pd.to_datetime(df_corner_point["timestamp"],errors="coerce").dt.year
+    df_corner_point["month"]=pd.to_datetime(df_corner_point["timestamp"],errors="coerce").dt.month
+    df_corner_point["timestamp"]=pd.to_datetime(df_corner_point["timestamp"],errors="coerce")
+    
+    df_corner_point_group_year=df_corner_point.groupby(["asset_id","year"]).agg(max_timestamp=("timestamp","max"),min_timestamp=("timestamp","min") ).reset_index()
+
+
+    df_corner_point_group_year=df_corner_point_group_year.merge(df_corner_point[["asset_id","timestamp","year","counter_value"]],how="left",
+                                                                left_on=["min_timestamp","asset_id","year"], 
+                                                                right_on=["timestamp","asset_id","year"]).reset_index().rename(columns={"counter_value":"counter_value_min"}).drop("timestamp",axis=1)
+
+
+    df_corner_point_group_year=df_corner_point_group_year.merge(df_corner_point[["asset_id","timestamp","year","counter_value"]],how="left",
+                                                                left_on=["max_timestamp","asset_id","year"], 
+                                                                right_on=["timestamp","asset_id","year"]).reset_index().rename(columns={"counter_value":"counter_value_max"}).drop("timestamp",axis=1)
+
+    df_corner_point_group_year["actual_oph"]=df_corner_point_group_year["counter_value_max"]-df_corner_point_group_year["counter_value_min"]
+
+    return df_corner_point_group_year, df_corner_point
+
+
+
+
+# #Myacbackbone
+# unit_definition_h = get_unit_definition_h(conn)
+# unit_definition_h_select = unit_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "contractid", "unitstartcounter", "unitendcounter", "serialnumber", "enginetype", "engineversion"]] # "contractid", 
+# unit_definition_billings_h = get_unit_definition_billings_h(conn)
+# unit_definition_billings_h_select = unit_definition_billings_h[lambda x: (x["is_myac_last_event"] == 1) & (x["billingtype"] == "PACKAGE")][["unitdefinition_id", "billingtype", "title", "rate", "uom", "packagename", "maturityintervals"]] # , "id" 
+
+# # load myac unit data (also with is_myac_last_event == 1). this is mainly to attach serial number (usn) and be able to attach the contract later
+# unit_definition_h = get_unit_definition_h(conn)
+# unit_definition_h_select = unit_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "contractid", "unitstartcounter", "unitendcounter", "serialnumber", "enginetype", "engineversion"]] # "contractid", 
+
+# # load myac contract data (opportunity id and contract number)
+# contract_definition_h = get_contract_definition_h(conn)
+# contract_definition_h_select = contract_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "opportunityid", "primarycontract", "oraclecontractsnumber"]].drop_duplicates()
+
+# # load myac opportunity data (otr-status and customername)
+# opportunity_definition_h = get_opportunity_definition_h(conn)
+# opportunity_definition_h_select = opportunity_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "opportunitynumber", "version", "customername"]].drop_duplicates()
+
+
+# ##########################################################################################
+# # PREPARE MYA-C DATA
+# ##########################################################################################
+
+# #### MERGE MYA-C DATA
+# # combine unit- and package data
+# df_unit_definition_and_billings = pd.merge(
+#     unit_definition_h_select.rename(columns = {"id": "unitdefinition_id"}),
+#     unit_definition_billings_h_select,
+#     on = "unitdefinition_id",
+#     how = "outer"
+# )
+
+# # add contract info
+# df_unit_definition_and_billings_and_contract_info = pd.merge(
+#     df_unit_definition_and_billings,
+#     contract_definition_h_select.rename(columns = {"id": "contractid"}),
+#     on = "contractid",
+#     how = "left"
+# )
+
+# # add otr-status info
+# df_unit_definition_and_billings_and_contract_info = pd.merge(
+#     df_unit_definition_and_billings_and_contract_info,
+#     opportunity_definition_h_select.rename(columns = {"id": "opportunityid"}),
+#     on = "opportunityid",
+#     how = "left"
+# )
+
+    
+# # create overview datamodel
+# dm_myac_overview = (df_unit_definition_and_billings_and_contract_info
+#                     [lambda x: (x["primarycontract"] == True)&(x["version"]=="OTR")]
+#                     .assign(flag_package_info_missing_myac = lambda x: np.where(x["billingtype"].isna(), True, False))
+#                     .rename(columns = {"serialnumber": "usn", "oraclecontractsnumber": "contract_number"})
+#                     [["opportunitynumber", "opportunityid", "contract_number", "contractid", "primarycontract", "usn", "unitdefinition_id", "version", "unitstartcounter", "unitendcounter", "customername", "flag_package_info_missing_myac"]]
+#                     .drop_duplicates()
+# )
+# dm_myac_overview 
