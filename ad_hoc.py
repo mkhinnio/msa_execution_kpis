@@ -63,14 +63,13 @@ df_aggregated_oph_year=df_aggregated_oph_year.merge(geo_loc_ib_metabase[["asset_
 #Total number of hours by fleet type
 ##########################################################################################
 
-msa_df_1,msa_df_2,msa_df_3, msa_df_4, msa_df_5, df_steerco_overview_updated_msa = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","MSA USAGE BILLED", "MSA BILLABLE SHIPPING"],[
-    "MSA_PREVENTIVE_AND_CORRECTIVE","MSA_PREVENTIVE"], date.today(), ib_status_selected)
+msa_df_1,msa_df_2,msa_df_3, msa_df_4, msa_df_5, df_steerco_overview_updated_msa, details_df_output1 = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","MSA USAGE BILLED", "MSA BILLABLE SHIPPING"],[
+    "MSA_PREVENTIVE_AND_CORRECTIVE","MSA_PREVENTIVE"], date.today(), ib_status_selected, ib_extended_report)
 df_steerco_overview_updated_msa
 
-csa_df_1,csa_df_2,csa_df_3, csa_df_4, csa_df_5, df_steerco_overview_updated_csa = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","PREVENTIVE MAINTENANCE"],[
-    "CSA_PREVENTIVE_AND_CORRECTIVE","CSA_PREVENTIVE"], date.today(), ib_status_selected)
+csa_df_1,csa_df_2,csa_df_3, csa_df_4, csa_df_5, df_steerco_overview_updated_csa, details_df_output2 = msa_fleet_status(oracle_landscape_select, "usn", ["PREVENTIVE AND CORRECTIVE","PREVENTIVE MAINTENANCE"],[
+    "CSA_PREVENTIVE_AND_CORRECTIVE","CSA_PREVENTIVE"], date.today(), ib_status_selected, ib_extended_report)
 df_steerco_overview_updated_csa
-
 
 
 df_aggregated_oph_year.loc[lambda x: x["unit_serial_number"].isin(msa_df_4)==True,:].groupby(["year"]).aggregate({"actual_oph":"sum"})

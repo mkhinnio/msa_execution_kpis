@@ -48,30 +48,6 @@ pd.set_option('display.max_columns', 999)
 ##########################################################################################
 
 conn = activate_database_driver(driver_version="18", credentials_file="credentials.yml")
-
-
-#######################
-##1st: MSA fleet status / and also 2nd MSA Data Quality status
-#######################
-
-####
-#Criteria: 
-#Active MSAs: Contract Numbers with contract status active 
-#Active Units: Oracle contract unit status active unit oks status ??? 
-#Unit level execution: Manual list 
-#Unit commissioned: Oracle unit IB status is "active" or "active-docu inoplete" or "temporarily inactive"
-####
-
-oracle_landscape_raw = import_oracle_data_from_azure(conn)
-oracle_landscape_select = oracle_landscape_raw.rename(columns={"unit serial - number only":"usn","contract number":"contract_number"})
-
-
-
-########################
-#2nd: Data quality status
-######################## 
-conn = activate_database_driver(driver_version="18", credentials_file="credentials.yml")
-
 #IB report 
 ib_extended_report=import_ib_extended_from_azure(conn)
 #myPlant - USN mapping 
@@ -83,24 +59,60 @@ sbom_nonsuperseded = import_sbom_nonsuperseded(conn)
 #MYAC opportunities
 opportunity_report_myac=get_opportunity_config(conn)
 
+oracle_landscape_raw = import_oracle_data_from_azure(conn)
+oracle_landscape_select = oracle_landscape_raw.rename(columns={"unit serial - number only":"usn","contract number":"contract_number"})
 
-df_packages_events_sbom_myp=events_partscope_qty_myp(dmp_events, sbom_nonsuperseded)
-msa_data_quality_backbone=gen_input_df_msa_data_quality(oracle_landscape_select, ib_extended_report, geo_loc_ib_metabase, df_packages_events_sbom_myp, opportunity_report_myac)
-
+#Parameter
 msa_types_to_structure=["MSA BILLABLE SHIPPING","MSA USAGE BILLED","MSA PREVENTIVE AND CORRECTIVE"]
 ib_status_selected=["Active","Standby","Active Docu incomplete", "Temporarily Inactive"]
 
 
-
-active_unit_unit_level_usns_total,active_outdated_oph_counter,active_beyond_contract_end, active_outside_counter_range, active_missing_partscope, active_missing_partscope_or_event, df_steerco_overview_updated = msa_data_quality(msa_data_quality_backbone, "usn", ["MSA BILLABLE SHIPPING"],[], date.today(), ib_status_selected)
-
+##########################################################################################
+# PREPARATION
+##########################################################################################
 
 #######################
-##EVALUATE TABLES
+##1st: MSA fleet status / and also 2nd MSA Data Quality status
+#######################
+
+####
+#Criteria: 
+####
+
+# 1. Oracle contract status "active" + contract type "MSA Usage"
+# 2. Oracle contract unit status "active"
+# 3. Manually maintained list to filter out customers (e.g. SECCO)
+# 4. Oracle unit IB status "active" or "active - docu incomplete" or "temporarily inactive"
+####
+
+#Only works with landscape_select
+
+########################
+#2nd: Data quality status
+######################## 
+
+#Check for sbom events mismatch myp - currently not used in dashboard logic
+df_packages_events_sbom_myp=events_partscope_qty_myp(dmp_events, sbom_nonsuperseded)
+#
+msa_data_quality_backbone=gen_input_df_msa_data_quality(oracle_landscape_select, ib_extended_report, geo_loc_ib_metabase, df_packages_events_sbom_myp, opportunity_report_myac)
+
+####
+#Criteria:
+####
+ 
+# For all units under 4.: today minus month of last myPlant unit counter reading date > 6
+# For all units under 4.: today > MYAC unit end date
+# For all units under 4: myPlant OPH counter > MYAC unit end date or myPlant OPH counter < MYAC unit start date
+# For all units under 4.: sum of myPlant packages = 0
+####
+
+# active_unit_unit_level_usns_total,active_outdated_oph_counter,active_beyond_contract_end, active_outside_counter_range, active_missing_partscope, active_missing_partscope_or_event, df_steerco_overview_updated = msa_data_quality(msa_data_quality_backbone, "usn", ["MSA BILLABLE SHIPPING"],[], date.today(), ib_status_selected)
+
+#######################
+# INITIALIZE TABLES
 #######################
 
 date_filter=date.today()
-
 
 print(f"Date evaluated on: {date_filter}")   
 
@@ -111,28 +123,29 @@ df_export_data_quality=pd.DataFrame()
 df_export_fleet_status_details=pd.DataFrame()
 df_export_data_quality_details=pd.DataFrame()
 
-##Add here: export for other topics
-
 #######################
-##GENERATE CURRENT STATUS SUMMARY
+# GENERATE CURRENT STATUS SUMMARY
 #######################
 
 for combination in itertools.product(msa_types_to_structure, ["usn","contract_number"]):
+    #Fleet Status
     df_0, df_1, df_2, df_3, df_4,overview, details_df_fleet_status = msa_fleet_status(oracle_landscape_select, combination[1], [combination[0]],[], date_filter, ib_status_selected, ib_extended_report)
     df_export_fleet_status=pd.concat([df_export_fleet_status,overview], axis=0)     
     df_export_fleet_status_details=pd.concat([df_export_fleet_status_details,details_df_fleet_status], axis=0)  
+    #Data Quality
     df_0, df_1, df_2, df_3, df_4,df_5, overview, details_df_data_quality = msa_data_quality(msa_data_quality_backbone, combination[1], [combination[0]],[], date_filter, ib_status_selected, ib_extended_report)
     df_export_data_quality=pd.concat([df_export_data_quality,overview], axis=0)
-    df_export_data_quality_details=pd.concat([df_export_data_quality_details,details_df_data_quality], axis=0)  
+    df_export_data_quality_details=pd.concat([df_export_data_quality_details,details_df_data_quality], axis=0) 
+
 #######################
-##LOAD HISTORIC VALUES
+# LOAD HISTORIC VALUES
 #######################
 
 historic_fleet_status=get_historic_values("overall_msa_execution_stats/stacked","fleet_status")
 historic_quality_status=get_historic_values("overall_msa_execution_stats/stacked","quality_status")
 
 #######################
-##GENERATE OUTPUTS
+# GENERATE OUTPUTS
 #######################
 
 df_fleet_status_appended=pd.concat([df_export_fleet_status,historic_fleet_status], axis=0)
