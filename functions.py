@@ -988,6 +988,135 @@ def get_opportunity_config(conn):
     opportunity_config_h = pd.read_sql(query, conn) 
     return opportunity_config_h
 
+def get_financials_myac_cost_site(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT *
+            FROM sot_gps_dp.dwh_rep_myac_financial_forecast_csa
+            """
+    financials_h = pd.read_sql(query, conn) 
+    return financials_h
+
+
+def get_financials_myac_cost_granular_by_opportunity(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT *
+            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa  
+            where opportunity_number = '0992496'
+            """
+    financials_h = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return financials_h
+
+def get_financials_myac_cost_granular_by_contract(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT *
+            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa  
+            where contract_number = 'SER_DE_00952'
+            """
+    financials_h = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return financials_h
+
+def get_financials_myac_cost_granular(conn):
+    '''
+    dwh_dm_myac_unit_definition_h
+    '''
+    query = """
+            SELECT *
+            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa  
+            where opportunity_number in ('1335920','1501096','1274356','4001136','4010546','1346076','1516209','1511218','0934650','0967118',
+							'0992496','967118','934650','992496')
+            """
+    financials_h = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return financials_h
+
+def power_query_cost(conn):
+    query= """
+    SELECT * from (SELECT DISTINCT opportunity_number as opportunity_number_conf, opportunity_name as opportunity_name_conf from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration 
+    where unit_engine_type like '920' and opportunity_version like 'OTR') as myac_conf LEFT JOIN pgsdwh.sot_gps_dp.dwh_rep_myac_cost_forecast_csa AS myac_costs on myac_conf.opportunity_number_conf = myac_costs.opportunity_number
+    """
+    output = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return output
+
+def power_query_billings(conn):
+    query= """
+    SELECT * from (SELECT DISTINCT opportunity_number as opportunity_number_conf, opportunity_name as opportunity_name_conf from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration 
+    where unit_engine_type like '920' and opportunity_version like 'OTR') as myac_conf LEFT JOIN pgsdwh.sot_gps_dp.dwh_rep_myac_billing_forecast_csa AS myac_billings on myac_conf.opportunity_number_conf = myac_billings.opportunity_number
+    """
+    output = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return output
+
+def power_query_allfinancials(conn):
+    query= """
+    SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where unit_engine_type like '920'    ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
+    output = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return output
+
+
+def power_query_opportunityname(conn):
+    query= """
+    SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where unit_engine_type like '920'   and opportunity_version like 'OTR'  ) as myac_conf LEFT JOIN pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
+    output = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return output
+
+def get_cost_information_actuals(conn):
+    query= """
+            select 
+trx.service_request_number as sr_trx, 
+trx.business_sub_division_dv_gl,
+coa.innio_hierarchy_rep_1_dd,
+coa.innio_hierarchy_rep_2_dd,
+coa.innio_hierarchy_rep_3_dd, 
+trx.cost_category_hierarchy_rep_1,
+trx.project_code_dv_gl, 
+trx.fiscal_period_dv,
+trx.ledger_dv, 
+trx.account_dd_gl,
+coa.ge_hierarchy_dv
+,sum(trx.accounted_amt_eur) as amt_eur_trx
+from pgsdwh.sot_gps_dp.dwh_dm_idl_trx_actual_margin_se_v as trx 
+left join pgsdwh.sot_gps_dp.dwh_dm_idl_coa_account_v as coa on trx.account_dv = coa.account_dv
+--left join pgsdwh.sot_gps_dp.dwh_dm_idl_coa_geography_v as coa_geography on trx.geography_dv_gl = coa_geography.geography_dv
+--left join pgsdwh.sot_gps_dp.dwh_dm_idl_map_purchase_order_v as map_purchase on trx.purchase_order_rf = map_purchase.purchase_order_rf 
+--left join pgsdwh.sot_gps_dp.dwh_dm_idl_map_service_contract_lines_v as map_scl on trx.service_contract_line_rf = map_scl.service_contract_line_rf 
+--left join pgsdwh.sot_gps_dp.dwh_dm_idl_map_service_request_v as map_sr on trx.service_request_rf = map_sr.service_request_rf 
+where ((trx.fiscal_period_dv like '%23')|(trx.fiscal_period_dv like '%21')|(trx.fiscal_period_dv like '%22'))
+and trx.project_code_dv_gl like 'PWCSA00002'
+and trx.service_request_rf is not null
+and trx.business_segment_dv_gl = 'Services'
+
+--and (trx.account_dv_gl not like '5020101277' or trx.account_dv_gl not like '5020101278')
+and trx.service_request_number not like ''
+and coa.account_type_av like 'Expense'
+--and trx.service_request_number like '1501031' --> SR filter for testing
+group by trx.service_request_number, 
+trx.business_sub_division_dv_gl,
+coa.innio_hierarchy_rep_1_dd,
+coa.innio_hierarchy_rep_2_dd,
+coa.innio_hierarchy_rep_3_dd, 
+trx.cost_category_hierarchy_rep_1,
+trx.project_code_dv_gl, 
+trx.fiscal_period_dv,
+trx.ledger_dv, 
+trx.account_dd_gl, 
+coa.ge_hierarchy_dv
+    """
+    cost_overview = pd.read_sql(query, conn) 
+    return cost_overview
 
 def get_financials_myac(conn):
     '''

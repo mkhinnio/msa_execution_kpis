@@ -92,6 +92,7 @@ financials_myac_year=financials_myac.loc[lambda x: x["Last Version"]==True,:]
 
 financials_myac_year=financials_myac_year.groupby(["Unit Serial Number","year"]).agg(cost=("Cost","sum"),
                                                                                 revenue=("Billings cons. Bonus/LD","sum")).reset_index().rename(columns={"Unit Serial Number":"unit_serial_number"})
+
 ###
 #CSA fleet
 ###
@@ -159,6 +160,92 @@ dm_myac_overview = (df_unit_definition_and_billings_and_contract_info
                     .drop_duplicates()
 )
 
+###
+#CSA J9 fleet
+###
+
+#How many J9 fleet? ==> financials_myac
+#pgsdwh.sot_gps_dp.dwh_vw_myac_financial_forecast_report_csa
+
+usn_j9_select=oracle_landscape_raw.loc[lambda x: x["product family"]=="Type 9","unit serial - number only"].unique()
+financials_myac_j9=financials_myac.loc[lambda x: (x["Unit Serial Number"].isin(usn_j9_select)==True),:]
+
+financials_myac_j9=financials_myac.loc[lambda x: (x["Last Version"]==True)&(x["Unit Serial Number"].isin(usn_j9_select)==True),:]
+financials_myac_j9=financials_myac_j9.loc[lambda x: (x["Opportunity Version"]=="OTR"),:]
+financials_myac_j9=financials_myac_j9.loc[lambda x: (x["Primary Contract"]==True),:]
+
+financials_myac_j9.loc[lambda x: x["Oracle Contract Number"]=="SER_DE_01147",:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"}).sum()
+
+
+
+#Works
+financials_myac_j9.loc[lambda x: x["Oracle Contract Number"]=="SER_DE_01399",:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum"}).sum()
+#Billings correct in total
+#Cost is wrong
+financials_myac_j9.loc[lambda x: x["Oracle Contract Number"]=="SER_DE_01589",:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum"}).sum()
+
+
+#Works and contracts
+financials_myac_j9.loc[lambda x: (x["Oracle Contract Number"]=="SER_DE_01589"),:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"}).sum()
+
+
+financials_myac_j9.loc[lambda x: x["Unit Serial Number"]=="1405726",:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum"})
+
+
+#Covered additional scope is not included - differences is due to covered additional scope
+financials_myac_j9.loc[lambda x: (x["Oracle Contract Number"]=="SER_IT_00640"),:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"}).sum()
+
+
+
+#Covered additional scope is not included - differences is due to covered additional scope
+financials_myac_j9.loc[lambda x: (x["Oracle Contract Number"]=="SER_DE_00552"),:].groupby(["year"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"}).sum()
+
+
+
+#Opportunity
+
+opp_myac=get_opportunity_config(conn)
+
+
+#View J9 
+
+financials_myac_j9.loc[lambda x: (x["Oracle Contract Number"]=="SER_IT_00640")&(x["year"]>2023)&(x["Unit Period"]==dt.date(2026, 10, 1)),:].groupby(["Last Actualized Date"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"})
+
+
+conn_ala = activate_database_driver(driver_version="18", credentials_file="credentials_ALa.yml")
+
+tables_site=get_financials_myac_cost_site(conn_ala)
+
+tables_site.loc[lambda x: (x["contract_number"]=="SER_IT_00640")&(x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True),:]
+
+tables_site.loc[lambda x: (x["contract_number"]=="SER_IT_00640")&
+                (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True),:].groupby(["unit_read_date"]).aggregate({"cost":"sum"})
+
+
+tables_site.loc[lambda x: (x["contract_number"]=="SER_IT_00640"),:].groupby(["unit_read_date"]).aggregate({"cost":"sum"})
+
+tables_site.loc[lambda x: (x["contract_number"]=="SER_IT_00640")&(x["unit_read_date"].isna()==True),:]
+
+tables_site.loc[lambda x: (x["contract_number"]=="SER_IT_00640")&(x["unit_read_date"].isna()==True)
+                &(x["opportunity_last_version"]==True)&(x["active_opportunity_version"]==True),"cost"].sum()
+
+#Overview actuals myac
+###
+
+
+financials_myac_j9=financials_myac.loc[lambda x: (x["Last Version"]==True)&(x["Opportunity Version"]=="OTR")&
+                                       (x["Primary Contract"]==True),:]
+
+financials_myac_j9.loc[lambda x: (x["Oracle Contract Number"]=="SER_IT_00640")&(x["year"]>2023),:].groupby(["Last Actualized Date"]).aggregate({'Billings cons. Bonus/LD':"sum",'Cost':"sum", "IC Cost":"sum"})
+
+
+#
+#Granular 
+
+
+tables_granular=get_financials_myac_cost_granular(conn_ala)
+
+
 
 df_aggregated_oph_year_csa=df_aggregated_oph_year_csa.merge(dm_myac_overview[["usn","minimumoperatinghours","expectedoperatinghoursperyear"]], 
                                                             how="left",
@@ -186,6 +273,11 @@ df_aggregated_oph_year_csa_revenue_select=df_aggregated_oph_year_csa_revenue.loc
 df_aggregated_oph_year_csa_revenue_select=df_aggregated_oph_year_csa_revenue.loc[lambda x: x["actual_oph"]<x["minimumoperatinghours"],:]
 
 df_aggregated_oph_year_csa_revenue_select.loc[lambda x: x["year"]<2024,:].groupby(["year"]).aggregate({"revenue_diff":"sum"}).sum()
+
+
+
+
+
 
 
 ##
