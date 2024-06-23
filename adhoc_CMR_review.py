@@ -88,17 +88,53 @@ df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=
 
 
 #
-#FOR CMR Review run this on friday and weekend (retrieve Cottbus)
+#FOR CMR Review run this on friday and weekend (+retrieve Cottbus)
 # 
 
+date_today=str(date.today())
 
 df_power_query_allfinancials_billings=power_query_billings(conn)
 df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["opportunity_version"]=="OTR")&
-                                          (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True)&(x["primary_contract"]==True),:].groupby(["contract_number","opportunity_name_conf"]).aggregate({"billing_amount":"sum"}).to_excel("billing_2024.xlsx")
+                                          (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True)&(x["primary_contract"]==True),:].groupby(["contract_number","opportunity_name_conf"]).aggregate({"billing_amount":"sum"}).to_excel("billing_2024" + date_today + ".xlsx")
 
 
 df_kiel_all_financials=power_query_allfinancials(conn)
-df_kiel_all_financials.loc[lambda x: (x["unit_period"]>="2023-12-31")&(x["opportunity_last_version"]==True)&(x["active_opportunity_version"]==True)&(x["opportunity_version"]=="OTR"),:].groupby(["opportunity_number","contract_number","opportunity_number_conf","contract_type","opportunity_name_conf"]).aggregate({"cost":"sum","billings_consid_ldb":"mean"}).to_excel("cost_2024_granular.xlsx")
+df_kiel_all_financials.loc[lambda x: (x["unit_period"]>="2023-12-31")&(x["opportunity_last_version"]==True)&(x["active_opportunity_version"]==True)&(x["opportunity_version"]=="OTR"),:].groupby(["opportunity_number","contract_number","opportunity_number_conf","contract_type","opportunity_name_conf"]).aggregate({"cost":"sum","billings_consid_ldb":"sum"}).to_excel("cost_2024_granular" + date_today + ".xlsx")
+
+
+#
+#Focus on the price effect for usage billing
+# 
+#Load myac_opportunity_configuration
+#
+
+##
+#Load opportunity configuration report to assess price quantity results
+##
+#Draw on Contribution Margin 
+
+conn = activate_database_driver(driver_version="18", credentials_file="credentials.yml")
+df_financials_dwh_vw=get_financials_myac(conn)
+df_opp_conf=get_opportunity_config(conn)
+
+#Compare against
+df_opp_conf.loc[lambda x: (x["Last Actualized Date"]=="2023-12-31")&(x["Last Version"]==True),["Opportunity Name","Oracle Contract Number", 'Last Actualized Date',"Total Opportunity CM% Cons Bonus/LDs"]].drop_duplicates().sort_values(by=["Last Actualized Date"], ascending=False)
+
+df_opp_conf.loc[lambda x: (x["Oracle Contract Number"]=="SER_DE_01209")&(x["Last Actualized Date"]=="2023-12-31"),:]
+
+
+df_opp_conf.loc[lambda x: (x["Oracle Contract Number"]=="SER_DE_01209")&(x["Last Actualized Date"]=="2023-12-31")&(x["Unit Serial Number"]=="1402506"),].drop_duplicates()
+
+
+#Compare forecast sum 
+
+
+df_financials_dwh_vw.groupby(["Oracle Contract Number"]).aggregate({"Billings cons. Bonus/LD":"sum","Cost":"sum"})
+
+df_financials_dwh_vw.loc[lambda x: (x["Oracle Contract Number"]=="SER_DE_01209")&(x["Last Actualized Date"]=="2023-12-31"),:].groupby(["Oracle Contract Number","Contract Name","Primary Contract","Active Opportunity Version","Last Version"]).aggregate({"Billings cons. Bonus/LD":"sum","Cost":"sum"})
+
+
+#Check billing tables as well for rates
 
 
 # #

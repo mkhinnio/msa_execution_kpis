@@ -983,7 +983,9 @@ def get_opportunity_config(conn):
     '''
     query = """
             SELECT * 
-            FROM pgsdwh.sot_gps_dp.dwh_vw_myac_opportunity_configuration_report
+            FROM pgsdwh.sot_gps_dp.dwh_vw_myac_opportunity_configuration_report 
+            where [Opportunity Number] in ('1335920','1501096','1274356','4001136','4010546','1346076','1516209','1511218','0934650','0967118',
+							'0992496','967118','934650','992496')
             """
     opportunity_config_h = pd.read_sql(query, conn) 
     return opportunity_config_h
@@ -1006,8 +1008,9 @@ def get_financials_myac_cost_granular_by_opportunity(conn):
     '''
     query = """
             SELECT *
-            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa  
-            where opportunity_number = '0992496'
+            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa 
+            where opportunity_number in ('1335920','1501096','1274356','4001136','4010546','1346076','1516209','1511218','0934650','0967118',
+							'0992496','967118','934650','992496','1168281')
             """
     financials_h = pd.read_sql(query, conn) 
     #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
@@ -1125,6 +1128,8 @@ def get_financials_myac(conn):
     query = """
             SELECT * 
             FROM pgsdwh.sot_gps_dp.dwh_vw_myac_financial_forecast_report_csa
+            where [Opportunity Number] in ('1335920','1501096','1274356','4001136','4010546','1346076','1516209','1511218','0934650','0967118',
+							'0992496','967118','934650','992496')
             """
     financials_h = pd.read_sql(query, conn) 
     return financials_h
