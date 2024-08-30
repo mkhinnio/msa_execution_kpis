@@ -45,8 +45,181 @@ conn = activate_database_driver(driver_version="18", credentials_file="credentia
 #FC 23 - Old MYA-C 
 ###
 
-df_billing_fc_23=pd.read_csv("ad_hoc_cmr/dwh_myac_rs_billing_forecast_entry_202406191458 (1).csv")
-df_cost_fc_23=pd.read_csv("ad_hoc_cmr/dwh_myac_rs_cost_forecast_entry_202406191456.csv")
+df_billing_fc_23=pd.read_csv("dwh_myac_rs_billing_forecast_entry_202406191458 (1).csv")
+df_cost_fc_23=pd.read_csv("dwh_myac_rs_cost_forecast_entry_202406191456.csv")
+df_cost_fc_23["occurence_year"]=pd.to_datetime(df_cost_fc_23["occurrence_date"],errors="coerce").dt.year
+
+
+#SRs
+#Manual list of srs from Gauravs file, taking into account unplanned costs
+list_srs=["1492427",
+"1492429",
+"1492425",
+"1468377",
+"1524137",
+"1512473",
+"1522039",
+"1535523",
+"1561447",
+"1562111",
+"1576205",
+"1566529",
+"1476669",
+"1554121",
+"1571979",
+"1565193",
+"1578067",
+"1575231",
+"1568379",
+"1592893",
+"1582769",
+"1589281",
+"1584857",
+"1595705",
+"1599783",
+"1592913",
+"1486781",
+"1585583",
+"1556445",
+"1465693",
+"1575937",
+"1540111",
+"1560937",
+"1476705",
+"1550613",
+"1482497"]
+srs_listed=return_srs_gl(conn,list_srs)
+
+srs_listed_events=return_srs_events(conn,list_srs)
+
+srs_combined=srs_listed.merge(srs_listed_events[["sr_number","name","execution_timestamp"]],how="left",left_on=["service_request_number"], right_on=["sr_number"])
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["name"].str.lower().str.contains("head")==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
+
+
+for i in range(0,len(srs_listed_events)):
+        srs_listed_events["execution_timestamp"][i]=dt.datetime.fromtimestamp((srs_listed_events["execution_timestamp"][i]/1000))
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["service_request_number"].isin(["1492429","1492425","1492427"])==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
+
+
+
+
+##
+#SRs Turbocharger
+###
+
+
+list_srs_turbo_kiel=["1593549",
+"1493651",
+"1498161",
+"1473303",
+"1496977",
+"1497929",
+"1497979",
+"1498079",
+"1497973",
+"1498161",
+"1498163",
+"1497973",
+"1497961",
+"1496907",
+"1473303",
+"1496821",
+"1496977",
+"1496953",
+"1497047",
+"1496821",
+"1577571",
+"1497047",
+"1520699",
+"1497929",
+"1473303",
+"1493651",
+"1497029",
+"1520699",
+"1497961",
+"1494283",
+"1490839",
+"1479545",
+"1493651",
+"1498161",
+"1467641",
+"1497029"
+]
+
+
+srs_listed=return_srs_gl(conn,list_srs_turbo_kiel)
+
+srs_listed_events=return_srs_events(conn,list_srs_turbo_kiel)
+
+srs_combined=srs_listed.merge(srs_listed_events[["sr_number","name","execution_timestamp"]],how="left",left_on=["service_request_number"], right_on=["sr_number"])
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["name"].str.lower().str.contains("head")==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
+
+
+for i in range(0,len(srs_listed_events)):
+        srs_listed_events["execution_timestamp"][i]=dt.datetime.fromtimestamp((srs_listed_events["execution_timestamp"][i]/1000))
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["service_request_number"].isin(["1492429","1492425","1492427"])==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
+
+
+##
+#SRs Turbocharger
+###
+
+
+lists_srs_resident_engineer=["1497929",
+"1520699",
+"1577571",
+"1496821",
+"1497961",
+"1497979",
+"1498079",
+"1496907",
+"1490839",
+"1496977",
+"1497973",
+"1497029",
+"1497047",
+"1473303",
+"1493651",
+"1457091",
+"1554427",
+"1494283",
+"1554415",
+"1467641",
+"1476165",
+"1475515",
+"1467637",
+"1467465",
+"1498055",
+"1465047",
+"1467161"
+]
+
+
+lists_srs_resident_engineer=["1492427"]
+
+srs_listed=return_srs_gl(conn,lists_srs_resident_engineer)
+
+srs_listed_events=return_srs_events(conn,lists_srs_resident_engineer)
+
+srs_combined=srs_listed.merge(srs_listed_events[["sr_number","name","execution_timestamp"]],how="left",left_on=["service_request_number"], right_on=["sr_number"])
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["name"].str.lower().str.contains("head")==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
+
+
+for i in range(0,len(srs_listed_events)):
+        srs_listed_events["execution_timestamp"][i]=dt.datetime.fromtimestamp((srs_listed_events["execution_timestamp"][i]/1000))
+
+
+srs_combined.loc[lambda x: (x["fiscal_period_dv"].str.contains("23")==True)&(x["service_request_number"].isin(["1492429","1492425","1492427"])==True),:].groupby(["sr_number","execution_timestamp"]).aggregate({"actual_cost_amt_eur":"sum"}).sort_values(by="actual_cost_amt_eur",ascending=False)
 
 
 
@@ -59,10 +232,10 @@ date_today=str(date.today())
 
 #FC Billings 2024
 df_power_query_allfinancials_billings=power_query_billings(conn)
-df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["opportunity_version"]=="OTR")&
+df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=="920 Activity Catalog JUN-2024")&(x["unit_activity_catalog"]=="920 Activity Catalog JUN-2024")&(x["opportunity_version"]=="OTR")&
                                           (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True)&(x["primary_contract"]==True)&(x["unit_billing_date"].dt.year>2023),:].groupby(["contract_number","opportunity_name_conf"]).aggregate({"billing_amount":"sum"}).to_excel("billing_2024" + date_today + ".xlsx")
 
-df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["unit_activity_catalog"]=="920 Activity Catalog APR-2024")&(x["opportunity_version"]=="OTR")&
+df_power_query_allfinancials_billings.loc[lambda x: (x["unit_activity_catalog"]=="920 Activity Catalog JUN-2024")&(x["unit_activity_catalog"]=="920 Activity Catalog JUN-2024")&(x["opportunity_version"]=="OTR")&
                                           (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True)&(x["primary_contract"]==True)&(x["unit_billing_date"].dt.year>2023),:].groupby(["contract_number","opportunity_name_conf","unit_billing_type","unit_billing_date"]).aggregate({"billing_amount":"sum"}).reset_index().to_excel("fc_billing_2024_raw" + date_today + ".xlsx")
 
 
@@ -131,7 +304,7 @@ df_cost_fc_23_harmonized["schedule_month"]=pd.to_datetime(df_cost_fc_23_harmoniz
 df_cost_fc_23_harmonized["cmr_year"]=2023
 
 #FC_24_harmonized
-
+df_kiel_all_financials=df_kiel_all_financials.loc[lambda x: x["opportunity_name_conf"]!="FW Ulm 20MW 2xJ920",:]
 df_cost_24_site_harmonized=df_kiel_all_financials.loc[lambda x: (x["unit_activity_catalog"].isna()==True)&(x["unit_period"]>="2023-12-31")&(x["opportunity_last_version"]==True)&(x["active_opportunity_version"]==True)&(x["opportunity_version"]=="OTR"),:].groupby(["opportunity_number","contract_type","unit_period"]).aggregate({"cost":"sum","billings_consid_ldb":"sum"}).reset_index()
 df_cost_24_site_harmonized["scope"]="SITE"
 df_cost_24_site_harmonized["service"]="None"
@@ -159,6 +332,7 @@ df_billings_fc_24_harmonized=df_power_query_allfinancials_billings.loc[lambda x:
                                           (x["active_opportunity_version"]==True)&(x["opportunity_last_version"]==True)&(x["primary_contract"]==True)&(x["unit_billing_date"].dt.year>=2023),:].groupby(["opportunity_number","contract_number","opportunity_name_conf","unit_billing_type","unit_billing_date"]).aggregate({"billing_amount":"sum"}).reset_index()
 #Filter out old MERHEIM 
 df_billings_fc_24_harmonized=df_billings_fc_24_harmonized.loc[lambda x: x["opportunity_name_conf"]!="MYA HKW Merheim RheinEnergie 3xJ920  Y647 ",:]
+df_billings_fc_24_harmonized=df_billings_fc_24_harmonized.loc[lambda x: x["opportunity_name_conf"]!="FW Ulm 20MW 2xJ920",:]
 
 df_billings_fc_24_harmonized=df_billings_fc_24_harmonized.rename(columns={"unit_billing_type":"billing_type","billing_amount":"billings","unit_billing_date":"billing_date"})
 
@@ -190,6 +364,13 @@ df_fc_harmonized_costs_to_use.loc[lambda x: x["opportunity_number"]=="934650","o
 df_fc_harmonized_costs_to_use.loc[lambda x: x["opportunity_number"]=="967118","opportunity_number"]="0967118"
 df_fc_harmonized_costs_to_use.loc[lambda x: x["opportunity_number"]=="992496","opportunity_number"]="0992496"
 
+opportunities_filter=["1346076","1335920","0992496"]
+opportunities_filter=["0967118"]
+df_fc_harmonized_billings_to_use=df_fc_harmonized_billings_to_use.loc[lambda x: x["opportunity_number"].isin(opportunities_filter)==True,:]
+df_fc_harmonized_costs_to_use=df_fc_harmonized_costs_to_use.loc[lambda x: x["opportunity_number"].isin(opportunities_filter)==True,:]
+
+df_fc_harmonized_costs_to_use=df_fc_harmonized_costs_to_use.loc[lambda x: x["cmr_year"]==2024,:]
+df_fc_harmonized_billings_to_use=df_fc_harmonized_billings_to_use.loc[lambda x: x["cmr_year"]==2024,:]
 
 
 df_fc_harmonized_billings_to_use.to_excel("df_fc_harmonized_billings_to_use" + date_today + ".xlsx")
@@ -197,6 +378,33 @@ df_fc_harmonized_costs_to_use.to_excel("df_fc_harmonized_costs_to_use" + date_to
 
 
 df_fc_harmonized_costs_to_use.groupby(["opportunity_number","cmr_year"]).aggregate({"cost":"sum"}).reset_index()
+df_fc_harmonized_billings_to_use.groupby(["contract_number","opportunity_name_conf","opportunity_number","cmr_year"]).aggregate({"billings":"sum"}).reset_index()
+
+
+
+
+
+##
+#Comparing for selective contracts positions in FC
+##
+sel_opportunity="1335920"
+#Check service or check scope billing_type
+df_cost_24_unit_harmonized.loc[lambda x: (x["schedule_year"]>2023)&(x["opportunity_number"]==sel_opportunity)&(x["scope"]=="Gen Set_Engine")&(x["billing_type"]=="INNIO_PARTS"),:].groupby(["opportunity_number","service"]).aggregate({"cost":"sum"}).sort_values(by="cost",ascending=False)
+
+
+
+df_cost_fc_23_harmonized.loc[lambda x: (x["schedule_year"]>2023)&(x["opportunity_number"]==sel_opportunity)&(x["scope"]=="Gen Set_Engine")&(x["billing_type"]=="INNIO_PARTS"),:].groupby(["opportunity_number","service"]).aggregate({"cost":"sum"}).sort_values(by="cost",ascending=False)
+
+#Only parts 
+
+#Check service or check scope billing_type
+df_cost_24_unit_harmonized.loc[lambda x: (x["schedule_year"]>2023)&(x["opportunity_number"]==sel_opportunity)&(x["billing_type"]=="INNIO_PARTS"),:].groupby(["opportunity_number","service"]).aggregate({"cost":"sum"}).sort_values(by="cost",ascending=False)
+
+
+
+df_cost_fc_23_harmonized.loc[lambda x: (x["schedule_year"]>2023)&(x["opportunity_number"]==sel_opportunity)&(x["billing_type"]=="INNIO_PARTS"),:].groupby(["opportunity_number","service"]).aggregate({"cost":"sum"}).sort_values(by="cost",ascending=False)
+
+
 
 ###
 #Harmonize actuals (tried to harmonized)

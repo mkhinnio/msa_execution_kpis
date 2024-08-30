@@ -1,0 +1,111 @@
+
+
+
+
+
+
+import datetime as dt
+# Import Packages
+import pandas as pd
+import numpy as np
+from datetime import date
+import shutil
+import xlsxwriter
+
+# Import self-defined functions
+from functions import *
+from sklearn.inspection import PartialDependenceDisplay, partial_dependence
+from sklearn.datasets import make_friedman1
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import GradientBoostingRegressor
+
+from sklearn.linear_model import Ridge
+from sklearn.model_selection import train_test_split
+from statsmodels.api import add_constant
+import statsmodels.api as sm
+import statsmodels.formula.api as smf 
+from dateutil.relativedelta import relativedelta
+from datetime import date
+
+# show all columns
+pd.set_option('display.max_columns', 999)
+
+
+
+
+
+conn = activate_database_driver(driver_version="18", credentials_file="credentials.yml")
+
+# load myac package data - is_myac_last_event == 1 (only this entry is the current valid one) & billingtype == "PACKAGE"
+unit_definition_billings_h = get_unit_definition_billings_h(conn)
+unit_definition_billings_h_select = unit_definition_billings_h[lambda x: (x["is_myac_last_event"] == 1) & (x["billingtype"] == "PACKAGE")][["unitdefinition_id", "billingtype", "title", "rate", "uom", "packagename", "maturityintervals"]] # , "id" 
+
+# load myac unit data (also with is_myac_last_event == 1). this is mainly to attach serial number (usn) and be able to attach the contract later
+unit_definition_h = get_unit_definition_h(conn)
+unit_definition_h_select = unit_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "contractid", "unitstartcounter", "unitendcounter", "serialnumber", "enginetype", "engineversion"]] # "contractid", 
+
+# load myac contract data (opportunity id and contract number)
+contract_definition_h = get_contract_definition_h(conn)
+contract_definition_h_select = contract_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "opportunityid", "primarycontract", "oraclecontractsnumber"]].drop_duplicates()
+
+# load myac opportunity data (otr-status and customername)
+opportunity_definition_h = get_opportunity_definition_h(conn)
+opportunity_definition_h_select = opportunity_definition_h[lambda x: (x["is_myac_last_event"] == 1)][["id", "opportunitynumber", "version", "customername"]].drop_duplicates()
+
+
+#### MERGE MYA-C DATA
+# combine unit- and package data
+df_unit_definition_and_billings = pd.merge(
+    unit_definition_h_select.rename(columns = {"id": "unitdefinition_id"}),
+    unit_definition_billings_h_select,
+    on = "unitdefinition_id",
+    how = "outer"
+)
+
+# add contract info
+df_unit_definition_and_billings_and_contract_info = pd.merge(
+    df_unit_definition_and_billings,
+    contract_definition_h_select.rename(columns = {"id": "contractid"}),
+    on = "contractid",
+    how = "left"
+)
+
+# add otr-status info
+df_unit_definition_and_billings_and_contract_info = pd.merge(
+    df_unit_definition_and_billings_and_contract_info,
+    opportunity_definition_h_select.rename(columns = {"id": "opportunityid"}),
+    on = "opportunityid",
+    how = "left"
+)
+
+
+df_unit_definition_and_billings_and_contract_info_selected=df_unit_definition_and_billings_and_contract_info.loc[lambda x: (x["version"]=="OTR")&(x["primarycontract"]==True),:]
+
+
+
+
+
+
+
+
+myac_contract_info_new=get_unit_definition_h(conn)
+
+myac_contract_contract_info=get_contract_definition_h(conn)
+myac_contract_contract_info_select=myac_contract_contract_info.loc[lambda x: x["effectivecontractstartdate"]>"2024-06-01",:]
+
+myac_contract_contract_info_select=myac_contract_contract_info_select.loc[lambda x: x["contractcategory"].str.contains("CSA")==True,:]
+
+myac_contract_info_new_select=myac_contract_info_new.loc[lambda x: x["contractid"].isin(myac_contract_contract_info_select["id"].unique())==True,:]
+myac_contract_info_new_select=myac_contract_info_new_select.loc[lambda x: x["is_myac_last_event"]==1,:]
+myac_contract_info_new_select=myac_contract_info_new_select.loc[lambda x: x["contractid"].isin(df_unit_definition_and_billings_and_contract_info_selected["contractid"].unique())==True,:]
+
+df_unit_definition_and_billings_and_contract_info_selected=df_unit_definition_and_billings_and_contract_info_selected.loc[lambda x: x["contractid"].isin(myac_contract_info_new_select["contractid"])==True,:]
+
+
+#myac_contract_info_new_select.to_excel("output_new_contracts_2024_01_05.xlsx")
+today="2024-07-05"
+writer = pd.ExcelWriter("output_new_contracts_since_2024_01_06_" + today + ".xlsx", engine='xlsxwriter')
+create_excel_table_for_data_table(writer=writer, df=myac_contract_info_new_select, sheet_name="Selection_Contract")
+create_excel_table_for_data_table(writer=writer, df=df_unit_definition_and_billings_and_contract_info_selected, sheet_name="Details")
+create_excel_table_for_data_table(writer=writer, df=df_unit_definition_and_billings_and_contract_info_selected, sheet_name="Contract_details")
+writer.close()

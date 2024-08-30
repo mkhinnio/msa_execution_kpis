@@ -696,6 +696,93 @@ def cost_up_driver_cost(corner_point_input,cost_input):
     return results, coeff_parameter_act_oph, intercept_act_oph, summary, val_sto_ttest
 
 
+def actuals_financials(conn):
+    query="""        
+    SELECT [dwh_dm_idl_trx_actual_margin_se_v].[account_dd_gl] AS [account_dd_gl], 
+    [dwh_dm_idl_trx_actual_margin_se_v].[account_dv_gl] AS [account_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[accounted_amt_eur] AS [accounted_amt_eur],
+    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl] AS [advent_region_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl] AS [advent_sub_region_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[batch_name_gl] AS [batch_name_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_name] AS [bill_to_customer_name],
+    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_rf] AS [bill_to_customer_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_site_rf] AS [bill_to_customer_site_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[business_division_dv_gl] AS [business_division_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[business_sub_division_dv_gl] AS [business_sub_division_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[entity_code_xla] AS [entity_code_xla],
+    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do] AS [fiscal_period_do],
+    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv] AS [fiscal_period_dv],
+    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl] AS [geography_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dd] AS [innio_hierarchy_rep_3_dd],
+    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv] AS [innio_hierarchy_rep_3_dv],
+    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd] AS [innio_hierarchy_rep_4_dd],
+    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dv] AS [innio_hierarchy_rep_4_dv],
+    [dwh_dm_idl_trx_actual_margin_se_v].[install_base_rf] AS [install_base_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[journal_category_gl] AS [journal_category_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[journal_name_gl] AS [journal_name_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[journal_source_gl] AS [journal_source_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[ledger_dv] AS [ledger_dv],
+    [dwh_dm_idl_trx_actual_margin_se_v].[line_amt_eur_po] AS [line_amt_eur_po],
+    [dwh_dm_idl_trx_actual_margin_se_v].[posted_date_gl] AS [posted_date_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[primary_ledger_currency_gl] AS [primary_ledger_currency_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl] AS [product_group_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[product_line_dv_gl] AS [product_line_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] AS [project_code_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[purchase_order_line_rf] AS [purchase_order_line_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[purchase_order_rf] AS [purchase_order_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[ref_code_dv_gl] AS [ref_code_dv_gl],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_line_rf] AS [service_contract_line_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok] AS [service_contract_number_ok],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_rf] AS [service_contract_rf],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_order_number_oe] AS [service_order_number_oe],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_request_number] AS [service_request_number],
+    [dwh_dm_idl_trx_actual_margin_se_v].[service_request_rf] AS [service_request_rf],
+    [dwh_dm_idl_map_service_order_lines_v].[item_number_oe] AS [item_number_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[item_description_oe] AS [item_description_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[freight_carrier_code_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[freight_terms_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[fob_point_code_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[shipping_method_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[demand_class_oe],
+    [dwh_dm_idl_map_service_order_lines_v].[shipment_priority_oe],
+    --[dwh_dm_idl_trx_actual_margin_se_v].[service_rf] AS [service_rf],
+    [dwh_dm_idl_map_service_request_v].incident_type,
+    [dwh_dm_idl_map_service_request_v].incident_subtype,
+    [dwh_dm_idl_map_service_request_v].close_date,
+    [dwh_dm_idl_map_service_request_v].incident_status,
+    [dwh_dm_idl_map_service_request_v].problem_summary,
+    [dwh_dm_idl_map_service_request_v].customer_name as "Customer as per SR",
+    [dwh_dm_idl_map_service_contract_v].bill_to_customer_name as "Customer as per Svc Contract",
+
+    [dwh_dm_idl_map_install_base_v].serial_number,
+    [dwh_dm_ibdwh_ib_extended_report].product_family,
+    [dwh_dm_ibdwh_ib_extended_report].engine_type,
+    [dwh_dm_ibdwh_ib_extended_report].unit_type,
+    [dwh_dm_ibdwh_ib_extended_report].engine_version,
+    [dwh_dm_ibdwh_ib_extended_report].gas_type_1,
+    [dwh_dm_ibdwh_ib_extended_report].gas_type_2,
+    [dwh_dm_ibdwh_ib_extended_report].piston_material,
+    [dwh_dm_idl_map_purchase_order_v].supplier_name_po,
+    [dwh_dm_idl_map_purchase_order_v].order_description_po,
+    [dwh_dm_idl_map_service_order_v].service_order_type_oe,
+    [dwh_dm_idl_coa_account_v].account_type_av
+
+    FROM [sot_gps_dp].[dwh_dm_idl_trx_actual_margin_se_v] [dwh_dm_idl_trx_actual_margin_se_v]
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_request_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_request_rf = [dwh_dm_idl_map_service_request_v].service_request_rf
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_order_rf = [dwh_dm_idl_map_service_order_v].service_order_rf
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_lines_v]  on [dwh_dm_idl_trx_actual_margin_se_v].[service_order_line_rf] = [dwh_dm_idl_map_service_order_lines_v].[service_order_line_rf]
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_contract_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_contract_rf = [dwh_dm_idl_map_service_contract_v].service_contract_rf
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_purchase_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].purchase_order_rf = [dwh_dm_idl_map_purchase_order_v].purchase_order_rf
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_coa_account_v] on [dwh_dm_idl_trx_actual_margin_se_v].account_dv_gl = [dwh_dm_idl_coa_account_v].account_dv
+    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_install_base_v] on  [dwh_dm_idl_map_service_request_v].install_base_rf = [dwh_dm_idl_map_install_base_v].install_base_rf
+    LEFT JOIN [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report] on [dwh_dm_idl_map_install_base_v].serial_number = [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report].unit_serial_no
+    where   left([dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do],4) >= '2023'
+    and   [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] = ('PWCSA00002')
+    and   [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv]  in ('31112100','31111122') """
+
+    output = pd.read_sql(query, conn) 
+    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
+    return output
 def min_oph_sensitivity(coeff_parameter_act_oph, group_coef):
         coeff_parameter_minimum_oph_effect=coeff_parameter_act_oph.copy()
         
@@ -1033,6 +1120,97 @@ def get_financials_myac_cost_site(conn):
     financials_h = pd.read_sql(query, conn) 
     return financials_h
 
+
+
+def harmonization_figures_total_waterfall(oracle_landscape_raw,ab_usns, harmonization_kpi, contract_type_oracle, contract_type_myac):
+    #Exemptions not_unit_level_execution
+    date_filter=date.today()
+    not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
+    not_unit_level_executed_contract_name=["infinis"]
+    not_unit_level_executed_installed_at_country=["bangladesh"]
+    not_unit_level_usns=oracle_landscape_raw.loc[lambda x: (x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"unit serial - number only"].unique()
+
+
+    #Oracle filtering 
+    # 
+    oracle_landscape_raw=oracle_landscape_raw.loc[lambda x: (x["contract type myac"].isin(contract_type_myac)==True)&(x["contract type oracle"].isin(contract_type_oracle)==True),:]
+    ib_types=["OUT OF SERVICE"]
+    active_contract_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE"),harmonization_kpi].unique()
+
+    active_unit_oks_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE"),harmonization_kpi].unique()
+    active_unit_not_unit_level_usns_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==True),harmonization_kpi].unique()
+
+    active_unit_ib_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True))),harmonization_kpi].unique()
+    active_unit_ib_total_not_ab_asset=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False),harmonization_kpi].unique()
+    active_unit_ib_total_not_ab_not_unit_level=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
+    active_unit_ib_total_not_ab_not_unit_level_otr=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False)&(x["myac status"]=="OTR"),harmonization_kpi].unique()
+
+
+    total_oks_active=[]
+    total_oks_active.append(len(active_unit_oks_total))
+    total_oks_active_ib_active=[]
+    total_oks_active_ib_active.append(len(active_unit_ib_total))
+    total_oks_active_ib_active_not_ab=[]
+    total_oks_active_ib_active_not_ab.append(len(active_unit_ib_total_not_ab_asset))
+    total_oks_active_ib_active_not_ab_not_unit=[]
+    total_oks_active_ib_active_not_ab_not_unit.append(len(active_unit_ib_total_not_ab_not_unit_level))
+    total_oks_active_ib_active_not_ab_not_unit_otr=[]
+    total_oks_active_ib_active_not_ab_not_unit_otr.append(len(active_unit_ib_total_not_ab_not_unit_level_otr))
+
+
+    dict_steerco_today = {}
+    dict_steerco_today["Date"] = date.today()
+    dict_steerco_today["Entries Total, Oracle contract Active"] = len(active_contract_total)
+    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active"] = len(active_unit_oks_total)
+    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active"] = len(active_unit_ib_total)
+    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB"] = len(active_unit_ib_total_not_ab_asset)
+    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution"] = len(active_unit_ib_total_not_ab_not_unit_level)
+    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution & MYAC OTR"] = len(active_unit_ib_total_not_ab_not_unit_level_otr)
+
+    
+    # create todays table and transform
+    df_steerco_today = pd.DataFrame.from_dict(dict_steerco_today, orient='index').T.set_index("Date")
+    df_steerco_overview_updated = pd.concat([df_steerco_today])[lambda x: ~x.index.duplicated(keep='last')].T
+    
+
+    return active_contract_total, active_unit_oks_total, active_unit_ib_total, active_unit_ib_total_not_ab_asset, active_unit_ib_total_not_ab_not_unit_level, active_unit_ib_total_not_ab_not_unit_level_otr, df_steerco_overview_updated
+
+def function_high_level_statistics(oracle_landscape_raw, ab_usns):
+    level_0, level_1, level_2, level_3, level_4, level_5, level_overview = harmonization_figures_total_waterfall(oracle_landscape_raw, ab_usns, "unit serial - number only", ['MSA BILLABLE SHIPPING'],["MSA_PREVENTIVE","MSA_PREVENTIVE_AND_CORRECTIVE"])
+
+    print(f"Entries Total, Oracle contract Active {len(level_0)}")    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active = {len(level_1)}')    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active {len(level_2)}')
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB {len(level_3)}')
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution {len(level_4)}')    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution & MYAC OTR {len(level_5)}')    
+
+    return level_0, level_1, level_2, level_3, level_4, level_5, level_overview
+
+
+
+def function_high_level_statistics(oracle_landscape_raw, ab_usns):
+    level_0, level_1, level_2, level_3, level_4, level_5, level_overview = harmonization_figures_total_waterfall(oracle_landscape_raw, ab_usns, "unit serial - number only", ['MSA BILLABLE SHIPPING'],["MSA_PREVENTIVE","MSA_PREVENTIVE_AND_CORRECTIVE"])
+
+    print(f"Entries Total, Oracle contract Active {len(level_0)}")    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active = {len(level_1)}')    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active {len(level_2)}')
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB {len(level_3)}')
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution {len(level_4)}')    
+
+    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution & MYAC OTR {len(level_5)}')    
+
+    return level_0, level_1, level_2, level_3, level_4, level_5, level_overview
+
 def get_financials_myac_cost_granular_by_opportunity_csa(conn):
     '''
     dwh_dm_myac_unit_definition_h
@@ -1043,27 +1221,12 @@ def get_financials_myac_cost_granular_by_opportunity_csa(conn):
             where contract_category in ('CSA_PREVENTIVE','CSA_PREVENTIVE_AND_CORRECTIVE')  
             and opportunity_version = 'OTR'
             --and schedule_date like '2023-%'
-            and (schedule_date like '2023-%' OR schedule_date like '2023-%' OR schedule_date like '2023-%')
+            and (schedule_date like '2024-%' OR schedule_date like '2023-%' OR schedule_date like '2022-%')
             --and opportunity_version = 'OTR' and opportunity_last_version = 0
             """
     financials_h = pd.read_sql(query, conn) 
     #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
     return financials_h
-
-
-def get_financials_myac_cost_granular_by_opportunity_usns_select(conn):
-    '''
-    dwh_dm_myac_unit_definition_h
-    '''
-    query = """
-            SELECT *
-            FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa 
-            where unit_serial_number in ('1142440', '1472707', '1142400', '1142282', '5955531')
-            """
-    financials_h = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return financials_h
-
 
 def get_financials_myac_cost_granular_by_opportunity(conn):
     '''
@@ -1124,16 +1287,6 @@ def power_query_billings(conn):
     #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
     return output
 
-def power_query_billings_csa(conn):
-    query= """
-    SELECT * from (SELECT DISTINCT opportunity_number as opportunity_number_conf, opportunity_name as opportunity_name_conf from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration 
-    where opportunity_version like 'OTR') as myac_conf LEFT JOIN pgsdwh.sot_gps_dp.dwh_rep_myac_billing_forecast_csa AS myac_billings on myac_conf.opportunity_number_conf = myac_billings.opportunity_number
-    """
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-
-
 def power_query_allfinancials(conn):
     query= """
     SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where unit_engine_type like '920'    ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
@@ -1142,295 +1295,9 @@ def power_query_allfinancials(conn):
     return output
 
 
-def harmonization_figures_total_waterfall(oracle_landscape_raw,ab_usns, harmonization_kpi, contract_type_oracle, contract_type_myac):
-    #Exemptions not_unit_level_execution
-    date_filter=date.today()
-    not_unit_level_executed_customers=["INDUSTRIAS JUAN F SECCO SA","GREENERGY","BREITENER"]
-    not_unit_level_executed_contract_name=["infinis"]
-    not_unit_level_executed_installed_at_country=["bangladesh"]
-    not_unit_level_usns=oracle_landscape_raw.loc[lambda x: (x["opportunity number myac"]=="4003875")|(x["customer name"].str.upper().str.contains("|".join(not_unit_level_executed_customers))==True)|(x["contract name"].str.lower().str.contains("|".join(not_unit_level_executed_contract_name))==True)|(x["installed at country"].str.lower().str.contains("|".join(not_unit_level_executed_installed_at_country))==True),"unit serial - number only"].unique()
-
-
-    #Oracle filtering 
-    # 
-    oracle_landscape_raw=oracle_landscape_raw.loc[lambda x: (x["contract type myac"].isin(contract_type_myac)==True)&(x["contract type oracle"].isin(contract_type_oracle)==True),:]
-    ib_types=["OUT OF SERVICE"]
-    active_contract_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE"),harmonization_kpi].unique()
-
-    active_unit_oks_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE"),harmonization_kpi].unique()
-    active_unit_not_unit_level_usns_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(x["unit serial - number only"].isin(not_unit_level_usns)==True),harmonization_kpi].unique()
-
-    active_unit_ib_total=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True))),harmonization_kpi].unique()
-    active_unit_ib_total_not_ab_asset=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False),harmonization_kpi].unique()
-    active_unit_ib_total_not_ab_not_unit_level=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False),harmonization_kpi].unique()
-    active_unit_ib_total_not_ab_not_unit_level_otr=oracle_landscape_raw.loc[lambda x: (x["contract status"]=="ACTIVE")&(x["unit oks status"]=="ACTIVE")&(~((x["unit status ib"].isin(ib_types)==True)|(x["unit status ib"].isna()==True)))&(x["unit serial - number only"].isin(ab_usns)==False)&(x["unit serial - number only"].isin(active_unit_not_unit_level_usns_total)==False)&(x["myac status"]=="OTR"),harmonization_kpi].unique()
-
-
-    total_oks_active=[]
-    total_oks_active.append(len(active_unit_oks_total))
-    total_oks_active_ib_active=[]
-    total_oks_active_ib_active.append(len(active_unit_ib_total))
-    total_oks_active_ib_active_not_ab=[]
-    total_oks_active_ib_active_not_ab.append(len(active_unit_ib_total_not_ab_asset))
-    total_oks_active_ib_active_not_ab_not_unit=[]
-    total_oks_active_ib_active_not_ab_not_unit.append(len(active_unit_ib_total_not_ab_not_unit_level))
-    total_oks_active_ib_active_not_ab_not_unit_otr=[]
-    total_oks_active_ib_active_not_ab_not_unit_otr.append(len(active_unit_ib_total_not_ab_not_unit_level_otr))
-
-
-    dict_steerco_today = {}
-    dict_steerco_today["Date"] = date.today()
-    dict_steerco_today["Entries Total, Oracle contract Active"] = len(active_contract_total)
-    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active"] = len(active_unit_oks_total)
-    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active"] = len(active_unit_ib_total)
-    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB"] = len(active_unit_ib_total_not_ab_asset)
-    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution"] = len(active_unit_ib_total_not_ab_not_unit_level)
-    dict_steerco_today["Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution & MYAC OTR"] = len(active_unit_ib_total_not_ab_not_unit_level_otr)
-
-    
-    # create todays table and transform
-    df_steerco_today = pd.DataFrame.from_dict(dict_steerco_today, orient='index').T.set_index("Date")
-    df_steerco_overview_updated = pd.concat([df_steerco_today])[lambda x: ~x.index.duplicated(keep='last')].T
-    
-
-    return active_contract_total, active_unit_oks_total, active_unit_ib_total, active_unit_ib_total_not_ab_asset, active_unit_ib_total_not_ab_not_unit_level, active_unit_ib_total_not_ab_not_unit_level_otr, df_steerco_overview_updated
-
-
-
-def function_high_level_statistics(oracle_landscape_raw, ab_usns):
-    level_0, level_1, level_2, level_3, level_4, level_5, level_overview = harmonization_figures_total_waterfall(oracle_landscape_raw, ab_usns, "unit serial - number only", ['MSA BILLABLE SHIPPING'],["MSA_PREVENTIVE","MSA_PREVENTIVE_AND_CORRECTIVE"])
-
-    print(f"Entries Total, Oracle contract Active {len(level_0)}")    
-
-    print(f'Entries Total, Oracle contract Active & Unit OKS Active = {len(level_1)}')    
-
-    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active {len(level_2)}')
-
-    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB {len(level_3)}')
-
-    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution {len(level_4)}')    
-
-    print(f'Entries Total, Oracle contract Active & Unit OKS Active & IB Active & non-AB & unit-level-execution & MYAC OTR {len(level_5)}')    
-
-    return level_0, level_1, level_2, level_3, level_4, level_5, level_overview
-
-
-def actuals_revenues_grouped(conn):
-    query="""
-    SELECT [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv],
-    [dwh_dm_idl_map_service_request_v].[incident_type], 
-    [dwh_dm_idl_map_service_request_v].[incident_subtype], 
-    [dwh_dm_ibdwh_ib_extended_report].[product_family], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[unit_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_version], 
-    [dwh_dm_ibdwh_ib_extended_report].[gas_type_1], sum([dwh_dm_idl_trx_actual_margin_se_v].[accounted_amt_eur]) as accounted_amt_eur
-    FROM [sot_gps_dp].[dwh_dm_idl_trx_actual_margin_se_v] [dwh_dm_idl_trx_actual_margin_se_v]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_request_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_request_rf = [dwh_dm_idl_map_service_request_v].service_request_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_order_rf = [dwh_dm_idl_map_service_order_v].service_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_lines_v]  on [dwh_dm_idl_trx_actual_margin_se_v].[service_order_line_rf] = [dwh_dm_idl_map_service_order_lines_v].[service_order_line_rf]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_contract_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_contract_rf = [dwh_dm_idl_map_service_contract_v].service_contract_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_purchase_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].purchase_order_rf = [dwh_dm_idl_map_purchase_order_v].purchase_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_coa_account_v] on [dwh_dm_idl_trx_actual_margin_se_v].account_dv_gl = [dwh_dm_idl_coa_account_v].account_dv
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_install_base_v] on  [dwh_dm_idl_map_service_request_v].install_base_rf = [dwh_dm_idl_map_install_base_v].install_base_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report] on [dwh_dm_idl_map_install_base_v].serial_number = [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report].unit_serial_no
-    where   left([dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do],4) >= '2015'
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] = ('PWCSA00002')
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv]  in ('31111111','31111121') 
-    GROUP BY  
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd],
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv],
-    [dwh_dm_idl_map_service_request_v].[incident_type], 
-    [dwh_dm_idl_map_service_request_v].[incident_subtype], 
-    [dwh_dm_ibdwh_ib_extended_report].[product_family], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[unit_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_version], 
-    [dwh_dm_ibdwh_ib_extended_report].[gas_type_1];"""
-
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-def actuals_financials_grouped(conn):
-    query="""
-    SELECT [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv],
-    [dwh_dm_idl_map_service_request_v].[incident_type], 
-    [dwh_dm_idl_map_service_request_v].[incident_subtype], 
-    [dwh_dm_ibdwh_ib_extended_report].[product_family], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[unit_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_version], 
-    [dwh_dm_ibdwh_ib_extended_report].[gas_type_1], sum([dwh_dm_idl_trx_actual_margin_se_v].[accounted_amt_eur]) as accounted_amt_eur
-    FROM [sot_gps_dp].[dwh_dm_idl_trx_actual_margin_se_v] [dwh_dm_idl_trx_actual_margin_se_v]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_request_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_request_rf = [dwh_dm_idl_map_service_request_v].service_request_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_order_rf = [dwh_dm_idl_map_service_order_v].service_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_lines_v]  on [dwh_dm_idl_trx_actual_margin_se_v].[service_order_line_rf] = [dwh_dm_idl_map_service_order_lines_v].[service_order_line_rf]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_contract_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_contract_rf = [dwh_dm_idl_map_service_contract_v].service_contract_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_purchase_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].purchase_order_rf = [dwh_dm_idl_map_purchase_order_v].purchase_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_coa_account_v] on [dwh_dm_idl_trx_actual_margin_se_v].account_dv_gl = [dwh_dm_idl_coa_account_v].account_dv
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_install_base_v] on  [dwh_dm_idl_map_service_request_v].install_base_rf = [dwh_dm_idl_map_install_base_v].install_base_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report] on [dwh_dm_idl_map_install_base_v].serial_number = [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report].unit_serial_no
-    where   left([dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do],4) >= '2015'
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] = ('PWCSA00002')
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv]  in ('31112100','31111122','31112200') 
-    GROUP BY  
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd],
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv],
-    [dwh_dm_idl_map_service_request_v].[incident_type], 
-    [dwh_dm_idl_map_service_request_v].[incident_subtype], 
-    [dwh_dm_ibdwh_ib_extended_report].[product_family], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[unit_type], 
-    [dwh_dm_ibdwh_ib_extended_report].[engine_version], 
-    [dwh_dm_ibdwh_ib_extended_report].[gas_type_1];"""
-
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-def actuals_financials(conn):
-    query="""        
-    SELECT [dwh_dm_idl_trx_actual_margin_se_v].[account_dd_gl] AS [account_dd_gl], 
-    [dwh_dm_idl_trx_actual_margin_se_v].[account_dv_gl] AS [account_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[accounted_amt_eur] AS [accounted_amt_eur],
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_region_dv_gl] AS [advent_region_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[advent_sub_region_dv_gl] AS [advent_sub_region_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[batch_name_gl] AS [batch_name_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_name] AS [bill_to_customer_name],
-    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_rf] AS [bill_to_customer_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[bill_to_customer_site_rf] AS [bill_to_customer_site_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[business_division_dv_gl] AS [business_division_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[business_sub_division_dv_gl] AS [business_sub_division_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[entity_code_xla] AS [entity_code_xla],
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do] AS [fiscal_period_do],
-    [dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_dv] AS [fiscal_period_dv],
-    [dwh_dm_idl_trx_actual_margin_se_v].[geography_dv_gl] AS [geography_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dd] AS [innio_hierarchy_rep_3_dd],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv] AS [innio_hierarchy_rep_3_dv],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dd] AS [innio_hierarchy_rep_4_dd],
-    [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_4_dv] AS [innio_hierarchy_rep_4_dv],
-    [dwh_dm_idl_trx_actual_margin_se_v].[install_base_rf] AS [install_base_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[journal_category_gl] AS [journal_category_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[journal_name_gl] AS [journal_name_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[journal_source_gl] AS [journal_source_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[ledger_dv] AS [ledger_dv],
-    [dwh_dm_idl_trx_actual_margin_se_v].[line_amt_eur_po] AS [line_amt_eur_po],
-    [dwh_dm_idl_trx_actual_margin_se_v].[posted_date_gl] AS [posted_date_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[primary_ledger_currency_gl] AS [primary_ledger_currency_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_group_dv_gl] AS [product_group_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[product_line_dv_gl] AS [product_line_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] AS [project_code_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[purchase_order_line_rf] AS [purchase_order_line_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[purchase_order_rf] AS [purchase_order_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[ref_code_dv_gl] AS [ref_code_dv_gl],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_line_rf] AS [service_contract_line_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_number_ok] AS [service_contract_number_ok],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_contract_rf] AS [service_contract_rf],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_order_number_oe] AS [service_order_number_oe],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_request_number] AS [service_request_number],
-    [dwh_dm_idl_trx_actual_margin_se_v].[service_request_rf] AS [service_request_rf],
-    [dwh_dm_idl_map_service_order_lines_v].[item_number_oe] AS [item_number_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[item_description_oe] AS [item_description_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[freight_carrier_code_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[freight_terms_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[fob_point_code_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[shipping_method_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[demand_class_oe],
-    [dwh_dm_idl_map_service_order_lines_v].[shipment_priority_oe],
-    --[dwh_dm_idl_trx_actual_margin_se_v].[service_rf] AS [service_rf],
-    [dwh_dm_idl_map_service_request_v].incident_type,
-    [dwh_dm_idl_map_service_request_v].incident_subtype,
-    [dwh_dm_idl_map_service_request_v].close_date,
-    [dwh_dm_idl_map_service_request_v].incident_status,
-    [dwh_dm_idl_map_service_request_v].problem_summary,
-    [dwh_dm_idl_map_service_request_v].customer_name as "Customer as per SR",
-    [dwh_dm_idl_map_service_contract_v].bill_to_customer_name as "Customer as per Svc Contract",
-
-    [dwh_dm_idl_map_install_base_v].serial_number,
-    [dwh_dm_ibdwh_ib_extended_report].product_family,
-    [dwh_dm_ibdwh_ib_extended_report].engine_type,
-    [dwh_dm_ibdwh_ib_extended_report].unit_type,
-    [dwh_dm_ibdwh_ib_extended_report].engine_version,
-    [dwh_dm_ibdwh_ib_extended_report].gas_type_1,
-    [dwh_dm_ibdwh_ib_extended_report].gas_type_2,
-    [dwh_dm_ibdwh_ib_extended_report].piston_material,
-    [dwh_dm_idl_map_purchase_order_v].supplier_name_po,
-    [dwh_dm_idl_map_purchase_order_v].order_description_po,
-    [dwh_dm_idl_map_service_order_v].service_order_type_oe,
-    [dwh_dm_idl_coa_account_v].account_type_av
-
-    FROM [sot_gps_dp].[dwh_dm_idl_trx_actual_margin_se_v] [dwh_dm_idl_trx_actual_margin_se_v]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_request_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_request_rf = [dwh_dm_idl_map_service_request_v].service_request_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_order_rf = [dwh_dm_idl_map_service_order_v].service_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_order_lines_v]  on [dwh_dm_idl_trx_actual_margin_se_v].[service_order_line_rf] = [dwh_dm_idl_map_service_order_lines_v].[service_order_line_rf]
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_service_contract_v] on [dwh_dm_idl_trx_actual_margin_se_v].service_contract_rf = [dwh_dm_idl_map_service_contract_v].service_contract_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_purchase_order_v] on [dwh_dm_idl_trx_actual_margin_se_v].purchase_order_rf = [dwh_dm_idl_map_purchase_order_v].purchase_order_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_coa_account_v] on [dwh_dm_idl_trx_actual_margin_se_v].account_dv_gl = [dwh_dm_idl_coa_account_v].account_dv
-    LEFT JOIN [sot_gps_dp].[dwh_dm_idl_map_install_base_v] on  [dwh_dm_idl_map_service_request_v].install_base_rf = [dwh_dm_idl_map_install_base_v].install_base_rf
-    LEFT JOIN [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report] on [dwh_dm_idl_map_install_base_v].serial_number = [sot_gps_dp].[dwh_dm_ibdwh_ib_extended_report].unit_serial_no
-    where   left([dwh_dm_idl_trx_actual_margin_se_v].[fiscal_period_do],4) >= '2023'
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[project_code_dv_gl] = ('PWCSA00002')
-    and   [dwh_dm_idl_trx_actual_margin_se_v].[innio_hierarchy_rep_3_dv]  in ('31112100','31111122') """
-
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-def power_query_allfinancials_usns_sequentially(conn, list_usns):
-    list_usns=','.join("'"+str(x)+"'" for x in list_usns)
-    list_usns="("+list_usns+")"
-    query= f"SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where unit_serial_number in {list_usns}    ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-
-def get_financials_myac_cost_granular_by_opportunity_usns_sequentially(conn,list_usns):
-    list_usns=','.join("'"+str(x)+"'" for x in list_usns)
-    list_usns="("+list_usns+")"    
-    query = f"SELECT * FROM sot_gps_dp.dwh_rep_myac_cost_forecast_csa where unit_serial_number in {list_usns}"
-    financials_h = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return financials_h
-
-
-def power_query_allfinancials_usns_select(conn):
-    query= """
-    SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where unit_serial_number in ('1142440', '1472707', '1142400', '1142282', '5955531')    ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
-    output = pd.read_sql(query, conn) 
-    #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
-    return output
-
 def power_query_allfinancials_csa(conn):
     query= """
-    SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where contract_category in ('CSA_PREVENTIVE','CSA_PREVENTIVE_AND_CORRECTIVE') and opportunity_version = 'OTR'   ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa where (unit_period like '2023-%' OR unit_period like '2023-%' OR unit_period like '2023-%') ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
+    SELECT  * from (select DISTINCT   opportunity_number as opportunity_number_conf   ,opportunity_name as opportunity_name_conf   from pgsdwh.sot_gps_dp.dwh_rep_myac_opportunity_configuration    where contract_category in ('CSA_PREVENTIVE','CSA_PREVENTIVE_AND_CORRECTIVE') and opportunity_version = 'OTR'   ) as myac_conf LEFT JOIN (select * from pgsdwh.sot_gps_dp.dwh_rep_myac_financial_forecast_csa where (unit_period like '2024-%' OR unit_period like '2023-%' OR unit_period like '2022-%') ) AS myac_finance on myac_conf.opportunity_number_conf = myac_finance.opportunity_number"""
     output = pd.read_sql(query, conn) 
     #--AND opportunity_last_version = 1 AND active_opportunity_version = 1
     return output

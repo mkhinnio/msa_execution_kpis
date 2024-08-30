@@ -66,7 +66,6 @@ oracle_landscape_select = oracle_landscape_raw.rename(columns={"unit serial - nu
 msa_types_to_structure=["MSA BILLABLE SHIPPING","MSA USAGE BILLED","MSA PREVENTIVE AND CORRECTIVE"]
 ib_status_selected=["Active","Standby","Active Docu incomplete", "Temporarily Inactive"]
 
-
 ##########################################################################################
 # PREPARATION
 ##########################################################################################
